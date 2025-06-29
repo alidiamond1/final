@@ -1,0 +1,2 @@
+C:/Users/pc/Downloads/Final-Year--Project-main/Final-Year--Project-main/mymobileapp/android/app/.cxx/Debug/qp602639/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/pc/Downloads/Final-Year--Project-main/Final-Year--Project-main/mymobileapp/android/app/.cxx/Debug/qp602639/x86_64/CMakeFiles/rebuild_cache.dir

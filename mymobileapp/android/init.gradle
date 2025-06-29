@@ -1,0 +1,11 @@
+allprojects {
+    afterEvaluate { project ->
+        if (project.name == 'external_path') {
+            project.android {
+                if (!project.android.hasProperty('namespace')) {
+                    project.android.namespace = "com.pinciat.external_path"
+                }
+            }
+        }
+    }
+} 
