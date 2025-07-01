@@ -143,16 +143,19 @@ class DatasetService {
         return filePath;
       }
       
-      // Get download URL
+      // Get download URL - make sure this matches the backend route
       final downloadUrl = '$baseUrl/$id/download';
       debugPrint('Downloading from: $downloadUrl');
       
-      // Using http client to download the file
+      // Using http client to download the file with proper headers
       final response = await http.get(
         Uri.parse(downloadUrl),
         headers: token != null ? {
           'Authorization': 'Bearer $token',
-        } : {},
+          'Accept': '*/*',  // Accept any content type
+        } : {
+          'Accept': '*/*',  // Accept any content type
+        },
       );
       
       if (response.statusCode == 200) {
@@ -176,6 +179,8 @@ class DatasetService {
       } else {
         // Try to parse error response
         try {
+          debugPrint('Download failed with status: ${response.statusCode}');
+          debugPrint('Response body: ${response.body}');
           final errorData = jsonDecode(response.body);
           throw Exception(errorData['error'] ?? 'Failed to download dataset');
         } catch (e) {

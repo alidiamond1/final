@@ -46,6 +46,7 @@ dependencies:
   # permission_handler: ^11.2.0    # Removed - not using permissions explicitly
   flutter_svg: ^2.0.10+1
   google_fonts: ^6.1.0
+  dio: ^5.4.0  # Fast and powerful HTTP client for faster downloads
 
 
 dev_dependencies:
