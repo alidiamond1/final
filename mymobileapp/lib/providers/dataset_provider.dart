@@ -98,6 +98,18 @@ class DatasetProvider extends ChangeNotifier {
     }
   }
   
+  // Method to update download status from anywhere
+  void updateDownloadStatus(String datasetId, DownloadState status, double progress, {String? filePath, String? error, String? taskId}) {
+    downloadStatus[datasetId] = DownloadStatus(
+      status: status,
+      progress: progress,
+      filePath: filePath,
+      error: error,
+      taskId: taskId,
+    );
+    notifyListeners();
+  }
+
   // Helper method to get file extension based on dataset type
   String _getFileExtension(String type) {
     switch (type.toLowerCase()) {
@@ -132,11 +144,13 @@ class DownloadStatus {
   final double progress;
   final String? filePath;
   final String? error;
+  final String? taskId;
   
   DownloadStatus({
     required this.status,
     this.progress = 0,
     this.filePath,
     this.error,
+    this.taskId,
   });
 }

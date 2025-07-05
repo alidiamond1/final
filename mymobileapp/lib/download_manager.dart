@@ -4,8 +4,9 @@ import 'services/dataset_service.dart';
 import 'providers/dataset_provider.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:dio/dio.dart'; // Add import for Dio package for faster downloads
-import 'services/auth_service.dart'; // Add import for AuthService
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'services/auth_service.dart';
 
 /// Extension methods for downloading datasets
 extension DatasetDownloadExtension on Dataset {
@@ -60,159 +61,100 @@ extension DatasetDownloadExtension on Dataset {
 /// Helper class for handling dataset downloads
 class DownloadManager {
   final BuildContext context;
-  final Dio _dio = Dio(); // Dio instance for faster downloads
   
   DownloadManager(this.context);
+
+
   
-  /// Download a dataset with improved speed using Dio
-  Future<String?> downloadDataset(Dataset dataset) async {
+  /// Download a dataset using flutter_downloader
+  Future<void> downloadDataset(Dataset dataset) async {
     try {
       final datasetProvider = Provider.of<DatasetProvider>(context, listen: false);
-      
-      // Show in-progress snackbar
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Text('Downloading dataset...'),
-              ],
-            ),
-            duration: Duration(seconds: 2),
-          ),
-        );
+
+      // 1. Request notification permission for download progress.
+      // On modern Android, storage permission is not required for flutter_downloader
+      // to save files to the public Downloads directory.
+      await Permission.notification.request();
+
+      // 2. Get download directory
+      final dir = await _getDownloadDir();
+      final fileName = dataset.downloadFilename;
+      final filePath = '${dir.path}/$fileName';
+
+      // 3. Check if file already exists
+      if (await File(filePath).exists()) {
+        debugPrint('File already exists: $filePath');
+        datasetProvider.updateDownloadStatus(dataset.id, DownloadState.completed, 1.0, filePath: filePath);
+        _showSuccessMessage(dataset, filePath);
+        return;
       }
-      
-      // Use the optimized download method for better speed
-      final filePath = await _optimizedDownload(dataset);
-      
-      if (filePath != null) {
-        // Update provider with completed status
-        datasetProvider.downloadStatus[dataset.id] = DownloadStatus(
-          status: DownloadState.completed,
-          progress: 1.0,
-          filePath: filePath,
-        );
-        datasetProvider.notifyListeners();
-        
-        // Only show success message if context is still mounted
+
+      // 4. Get authentication token
+      final token = await AuthService.getToken();
+      if (token == null) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${dataset.title} downloaded to Downloads folder'),
-              duration: const Duration(seconds: 3),
-              backgroundColor: Colors.green,
-              action: SnackBarAction(
-                label: 'OK',
-                textColor: Colors.white,
-                onPressed: () {},
-              ),
-            ),
+            const SnackBar(content: Text('Please log-in to download datasets'), backgroundColor: Colors.red),
           );
         }
+        return;
       }
-      
-      return filePath;
-    } catch (e) {
-      // Update provider with error status
-      final datasetProvider = Provider.of<DatasetProvider>(context, listen: false);
-      datasetProvider.downloadStatus[dataset.id] = DownloadStatus(
-        status: DownloadState.error,
-        error: e.toString(),
+
+      // 5. Enqueue the download
+      final taskId = await FlutterDownloader.enqueue(
+        url: '${DatasetService.baseUrl}/${dataset.id}/download',
+        savedDir: dir.path,
+        fileName: fileName,
+        showNotification: true,
+        openFileFromNotification: true,
+        allowCellular: true,
+        headers: {'Authorization': 'Bearer $token', 'Accept': '*/*'},
       );
-      datasetProvider.notifyListeners();
-      
-      // Only show error message if context is still mounted
+
+      if (taskId != null) {
+        debugPrint('⬇️ Download enqueued with taskId: $taskId');
+        datasetProvider.updateDownloadStatus(dataset.id, DownloadState.inProgress, 0.0, taskId: taskId, filePath: filePath);
+      } else {
+        throw Exception('Failed to enqueue download task.');
+      }
+
+    } catch (e) {
+      debugPrint('❌ Download error: $e');
+      final datasetProvider = Provider.of<DatasetProvider>(context, listen: false);
+      datasetProvider.updateDownloadStatus(dataset.id, DownloadState.error, 0.0, error: e.toString());
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
+          SnackBar(content: Text('Error: Failed to download ${dataset.title}'), backgroundColor: Colors.red),
         );
       }
-      return null;
     }
   }
   
-  /// Optimized download method using Dio for faster downloads
-  Future<String?> _optimizedDownload(Dataset dataset) async {
-    final token = await AuthService.getToken();
-    
-    try {
-      // Get download directory
-      final downloadDir = await _getDownloadDir();
-      
-      // Create full file path
-      final fileName = dataset.downloadFilename;
-      final filePath = '${downloadDir.path}/$fileName';
-      
-      // Check if file already exists
-      final file = File(filePath);
-      if (await file.exists()) {
-        debugPrint('File already exists: $filePath');
-        return filePath;
-      }
-      
-      // Get download URL - ensure it matches the backend route
-      final downloadUrl = '${DatasetService.baseUrl}/${dataset.id}/download';
-      debugPrint('Downloading from: $downloadUrl');
-      
-      // Set up options with headers and receive progress updates
-      final options = Options(
-        headers: token != null ? {
-          'Authorization': 'Bearer $token',
-          'Accept': '*/*',  // Accept any content type
-        } : {
-          'Accept': '*/*',  // Accept any content type
-        },
-        responseType: ResponseType.bytes,
-        followRedirects: true,
-        receiveTimeout: const Duration(minutes: 5), // Increase timeout for large files
+  /// Show success message after download completes
+  void _showSuccessMessage(Dataset dataset, String filePath) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${dataset.title} downloaded successfully'),
+              Text(
+                'File saved in Downloads/SomaliDatasets',
+                style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8)),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 4),
+          backgroundColor: Colors.green,
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
       );
-      
-      // Use Dio for faster download with progress updates
-      final response = await _dio.get(
-        downloadUrl,
-        options: options,
-        onReceiveProgress: (received, total) {
-          if (total != -1) {
-            final progress = received / total;
-            // Update download progress in provider
-            final datasetProvider = Provider.of<DatasetProvider>(context, listen: false);
-            datasetProvider.downloadStatus[dataset.id] = DownloadStatus(
-              status: DownloadState.inProgress,
-              progress: progress,
-            );
-            datasetProvider.notifyListeners();
-            debugPrint('Download progress: ${(progress * 100).toStringAsFixed(0)}%');
-          }
-        },
-      );
-      
-      // Check if response is valid
-      if (response.statusCode == 200 && response.data != null) {
-        // Write file to storage
-        await file.writeAsBytes(response.data);
-        debugPrint('File downloaded to: $filePath');
-        return filePath;
-      } else {
-        debugPrint('Download failed with status: ${response.statusCode}');
-        throw Exception('Download failed with status: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Optimized download error: $e');
-      throw Exception('Download error: ${e.toString()}');
     }
   }
   
@@ -221,53 +163,68 @@ class DownloadManager {
     try {
       if (Platform.isAndroid) {
         try {
+          // First attempt: Get Android Downloads directory (API level >= 29)
           final directory = await getExternalStorageDirectory();
+          debugPrint('📁 External storage path: ${directory?.path}');
+          
           if (directory != null) {
-            // Create a custom folder in external storage
+            // Create a custom folder that will be visible to the user
+            // in the Android/data/[package_name]/files/SomaliDatasets folder
             final downloadDir = Directory('${directory.path}/SomaliDatasets');
             
             // Create directory if it doesn't exist
             if (!await downloadDir.exists()) {
               await downloadDir.create(recursive: true);
             }
+            
+            debugPrint('📁 Created download directory at: ${downloadDir.path}');
             return downloadDir;
           } else {
             throw Exception('External storage directory is null');
           }
         } catch (e) {
-          // Fall back to application documents directory
+          debugPrint('❌ Error getting external storage: $e');
+          
+          // Second attempt: Use application documents directory
           final appDir = await getApplicationDocumentsDirectory();
-          final downloadsDir = Directory('${appDir.path}/downloads');
+          debugPrint('📁 App documents directory: ${appDir.path}');
+          
+          final downloadsDir = Directory('${appDir.path}/SomaliDatasets');
           if (!await downloadsDir.exists()) {
             await downloadsDir.create(recursive: true);
           }
+          
+          debugPrint('📁 Created fallback download directory at: ${downloadsDir.path}');
           return downloadsDir;
         }
       } else if (Platform.isIOS) {
         // On iOS, use documents directory
         final directory = await getApplicationDocumentsDirectory();
-        final downloadsDir = Directory('${directory.path}/Downloads');
+        final downloadsDir = Directory('${directory.path}/SomaliDatasets');
         if (!await downloadsDir.exists()) {
           await downloadsDir.create(recursive: true);
         }
+        debugPrint('📁 Created iOS download directory at: ${downloadsDir.path}');
         return downloadsDir;
       } else {
         // For other platforms
         final directory = await getApplicationDocumentsDirectory();
-        final downloadsDir = Directory('${directory.path}/downloads');
+        final downloadsDir = Directory('${directory.path}/SomaliDatasets');
         if (!await downloadsDir.exists()) {
           await downloadsDir.create(recursive: true);
         }
+        debugPrint('📁 Created download directory at: ${downloadsDir.path}');
         return downloadsDir;
       }
     } catch (e) {
-      debugPrint('Error getting download directory: $e');
-      // Fallback to application documents directory
+      debugPrint('❌ Error getting download directory: $e');
+      // Last resort fallback
       final appDocDir = await getApplicationDocumentsDirectory();
-      final downloadsDir = Directory('${appDocDir.path}/downloads');
+      final downloadsDir = Directory('${appDocDir.path}/SomaliDatasets');
       if (!await downloadsDir.exists()) {
         await downloadsDir.create(recursive: true);
       }
+      debugPrint('📁 Created last-resort download directory at: ${downloadsDir.path}');
       return downloadsDir;
     }
   }

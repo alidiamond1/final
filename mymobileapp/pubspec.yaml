@@ -43,10 +43,13 @@ dependencies:
   image_picker: ^1.0.4
   path_provider: ^2.1.2
   path_provider_android: ^2.2.2  # For better Android storage access
-  # permission_handler: ^11.2.0    # Removed - not using permissions explicitly
+  #permission_handler: ^11.2.0    # Removed - not using permissions explicitly
   flutter_svg: ^2.0.10+1
   google_fonts: ^6.1.0
   dio: ^5.4.0  # Fast and powerful HTTP client for faster downloads
+  flutter_downloader: ^1.11.5  # Native Android/iOS download manager
+  permission_handler: ^11.3.0  # Runtime storage permission
+  # file_saver: ^0.3.0  # Simple file saving across platforms
 
 
 dev_dependencies:

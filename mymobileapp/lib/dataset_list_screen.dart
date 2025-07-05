@@ -458,13 +458,100 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Download button using the DownloadManager
-              DownloadManager(context).buildDownloadButton(dataset),
+              // Reactive download button that rebuilds on status change
+              _buildDownloadButton(context, dataset),
             ],
           ),
           const SizedBox(height: 8),
         ],
       ),
+    );
+  }
+
+  Widget _buildDownloadButton(BuildContext context, Dataset dataset) {
+    // Use a Consumer to listen to changes in DatasetProvider and rebuild only this button
+    return Consumer<DatasetProvider>(
+      builder: (context, provider, child) {
+        final status = provider.downloadStatus[dataset.id];
+
+        // Case 1: Download not started or status is null
+        if (status == null || status.status == DownloadState.notStarted) {
+          return ElevatedButton.icon(
+            icon: const Icon(Icons.download, size: 18),
+            label: const Text('Download'),
+            onPressed: () {
+              // Use the DownloadManager to start the download
+              DownloadManager(context).downloadDataset(dataset);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          );
+        }
+
+        // Case 2: Switch based on the download status
+        switch (status.status) {
+          case DownloadState.inProgress:
+            return ElevatedButton(
+              onPressed: null, // Disable button while downloading
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey.shade400,
+                disabledForegroundColor: Colors.white.withOpacity(0.7),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      value: status.progress > 0 ? status.progress : null, // Indeterminate if 0
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text('${(status.progress * 100).toInt()}%'),
+                ],
+              ),
+            );
+          case DownloadState.completed:
+            return ElevatedButton.icon(
+              icon: const Icon(Icons.check_circle, size: 18),
+              label: const Text('Downloaded'),
+              onPressed: () {
+                // Optional: Implement logic to open the file or show its location
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('File saved at: ${status.filePath}')),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            );
+          case DownloadState.error:
+            return ElevatedButton.icon(
+              icon: const Icon(Icons.error, size: 18),
+              label: const Text('Retry'),
+              onPressed: () {
+                // Retry the download
+                DownloadManager(context).downloadDataset(dataset);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            );
+          default:
+            return Container(); // Should not be reached
+        }
+      },
     );
   }
 

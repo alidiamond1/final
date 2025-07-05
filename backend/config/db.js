@@ -2,8 +2,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Always use local MongoDB for file uploads
-// const MONGO_URL = "mongodb://localhost:27017/somali-dataset";
+
 const MONGO_URL = process.env.MONGO_URL;
 
 const connectDB = async () => {

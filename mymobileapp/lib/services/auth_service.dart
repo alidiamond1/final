@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   // Replace with your actual API URL
-  static const String baseUrl = 'http://10.0.2.2:3000/api/users';
+  static const String baseUrl = 'http://10.36.192.22:3000/api/users';
   
   // Store auth token
   static Future<void> storeToken(String token) async {
