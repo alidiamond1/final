@@ -14,8 +14,12 @@ const datasetSchema = new mongoose.Schema({
         required: true
     },
     size: {
-        type: String,
+        type: Number, // Changed from String to Number
         required: true
+    },
+    downloads: { // Added downloads field
+        type: Number,
+        default: 0
     },
     fileId: {
         type: String,

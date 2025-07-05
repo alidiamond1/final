@@ -4,8 +4,6 @@ import 'profile_and_login_page.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dataset_provider.dart';
 import 'home_screen.dart';
-import 'upload_dataset_screen.dart';
-import 'download_manager.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'dart:ui';
 import 'dart:isolate';

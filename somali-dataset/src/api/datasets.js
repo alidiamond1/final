@@ -1,5 +1,19 @@
 import api from './auth';
 
+// Get dataset statistics (total downloads and storage used)
+export const getStats = async () => {
+  try {
+    const response = await api.get('/datasets/stats');
+    // Only return total downloads and storage used
+    return {
+      downloads: response.data.downloads,
+      storage: response.data.storage,
+    };
+  } catch (error) {
+    throw error.response?.data || error.message || 'Failed to fetch stats';
+  }
+};
+
 // Dataset Management APIs
 export const getAllDatasets = async () => {
   try {
@@ -118,4 +132,4 @@ export const deleteDataset = async (datasetId) => {
     console.error('Error details:', error.response?.data);
     throw error.response?.data?.error || error.message || 'Failed to delete dataset';
   }
-}; 
+};

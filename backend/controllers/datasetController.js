@@ -110,7 +110,7 @@ export const createDataset = async (req, res) => {
                 // Generate a unique fileId
                 fileId = crypto.randomBytes(16).toString('hex');
                 fileName = req.file.originalname;
-                size = formatFileSize(req.file.size);
+                size = req.file.size; // Store size in bytes
                 fileContentType = req.file.mimetype;
                 
                 // Read file content into buffer
@@ -217,10 +217,11 @@ export const getAllDatasets = async (req, res) => {
 export const downloadDataset = async (req, res) => {
     try {
         const { id } = req.params;
-        
-        console.log(`📥 Download request for dataset: ${id}`);
-        
-        // Find the dataset in the database, including file content
+        console.log(`📥 Downloading dataset: ${id}`);
+
+        // Atomically increment the download count before sending the file
+        await Dataset.findByIdAndUpdate(id, { $inc: { downloads: 1 } });
+
         const dataset = await Dataset.findById(id);
         
         if (!dataset) {
@@ -256,6 +257,50 @@ export const downloadDataset = async (req, res) => {
     } catch (error) {
         console.error(`❌ Error downloading dataset: ${error.message}`);
         res.status(500).json({ error: error.message });
+    }
+};
+
+// Get dataset statistics (total downloads and storage)
+export const getDatasetStats = async (req, res) => {
+    try {
+        // Fetch all datasets and compute totals in JavaScript to avoid schema inconsistencies
+        const datasets = await Dataset.find({}, 'size downloads');
+
+        let totalDownloads = 0;
+        let totalStorage = 0; // in bytes
+
+        datasets.forEach(ds => {
+            // ----- downloads -----
+            const downloads = (ds.downloads && typeof ds.downloads === 'number') ? ds.downloads : 0;
+            totalDownloads += downloads;
+
+            // ----- size -----
+            let sizeBytes = 0;
+            if (typeof ds.size === 'number') {
+                sizeBytes = ds.size;
+            } else if (typeof ds.size === 'string') {
+                // handles "2.5 MB", "1024 KB", "512" (as string), "512B"
+                const match = ds.size.match(/(\d+\.?\d*)\s*(B|KB|MB|GB|TB)?/i);
+                if (match) {
+                    const value = parseFloat(match[1]);
+                    const unit = (match[2] || 'B').toUpperCase();
+                    const multipliers = { B: 1, KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3, TB: 1024 ** 4 };
+                    sizeBytes = value * (multipliers[unit] || 1);
+                }
+            }
+            totalStorage += sizeBytes;
+        });
+
+        // Format storage to MB for dashboard
+        const storageMB = (totalStorage / (1024 * 1024)).toFixed(0);
+
+        return res.json({
+            downloads: totalDownloads,
+            storage: `${storageMB} MB`
+        });
+    } catch (error) {
+        console.error('❌ Error fetching dataset stats:', error);
+        return res.status(500).json({ error: 'Server error while fetching stats' });
     }
 };
 

@@ -1,5 +1,5 @@
 import express from "express";
-import { createDataset, getDataset, getAllDatasets, downloadDataset, upload, updateDataset, deleteDataset } from "../controllers/datasetController.js";
+import { createDataset, getDataset, getAllDatasets, downloadDataset, upload, updateDataset, deleteDataset, getDatasetStats } from "../controllers/datasetController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -12,6 +12,9 @@ router.get("/:id", protect, getDataset);
 
 // Get all datasets - requires authentication
 router.get("/", protect, getAllDatasets);
+
+// Get dataset statistics - requires admin privileges
+router.get("/stats", protect, admin, getDatasetStats);
 
 // Download dataset - no authentication required to allow direct downloads from mobile
 router.get("/:id/download", downloadDataset);
