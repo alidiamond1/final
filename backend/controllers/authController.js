@@ -20,42 +20,45 @@ const generateToken = (user) => {
 
 export const registerUser = async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
-        
-        // Check if user with this email already exists
-        const existingUser = await User.findOne({ email });
+        const { name, username, email, password, role } = req.body;
+
+        // Check if user with this email or username already exists
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
         if (existingUser) {
-            return res.status(400).json({ error: "A user with this email already exists" });
+            if (existingUser.email === email) {
+                return res.status(400).json({ error: "A user with this email already exists" });
+            }
+            return res.status(400).json({ error: "A user with this username already exists" });
         }
-        
+
         // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        
-        // Create new user with role (default to 'user' if not specified)
-        const userData = { 
-            name, 
-            email, 
+
+        // Create new user
+        const userData = {
+            name,
+            username,
+            email,
             password: hashedPassword,
-            role: role || 'user' 
+            role: role || 'user'
         };
-        
-        console.log('Creating new user:', {...userData, password: '[HIDDEN]'});
+
         const user = await User.create(userData);
-        
-        // Generate a token for the new user
+
+        // Generate token
         const token = generateToken(user);
-        
-        console.log('User created successfully:', user._id);
-        res.status(201).json({ 
+
+        res.status(201).json({
             message: "User registered successfully",
             user: {
                 _id: user._id,
                 name: user.name,
+                username: user.username,
                 email: user.email,
                 role: user.role
             },
-            token 
+            token
         });
     } catch (error) {
         console.error('Error registering user:', error);
@@ -65,43 +68,33 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        
-        // Try to find user by email (which could actually be a username)
-        let user = await User.findOne({ email });
-        
-        // If user not found by email, check if email input was actually a username (stored in name field)
-        if (!user) {
-            user = await User.findOne({ name: email });
+        const { username, password } = req.body;
+
+        // Find user by username
+        const user = await User.findOne({ username });
+
+        // If no user found or password doesn't match, send a generic error
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ error: "Invalid username or password" });
         }
-        
-        // If still no user found
-        if (!user) {
-            return res.status(404).json({ error: "User not found. Please check your username/email." });
-        }
-        
-        // Verify password using bcrypt
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            return res.status(401).json({ error: "Invalid password" });
-        }
-        
-        // Generate token for authentication
+
+        // Generate token
         const token = generateToken(user);
-        
-        console.log(`User logged in: ${user.name} (${user.role})`);
-        
+
+        console.log(`User logged in: ${user.username} (${user.role})`);
+
         // Return user data and token
-        res.status(200).json({ 
+        res.status(200).json({
             user: {
                 _id: user._id,
                 name: user.name,
+                username: user.username,
                 email: user.email,
                 role: user.role,
                 profileImage: user.profileImage,
                 bio: user.bio
-            }, 
-            token 
+            },
+            token
         });
     } catch (error) {
         console.error('Login error:', error);

@@ -15,6 +15,7 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
+  late TextEditingController _usernameController;
   late TextEditingController _emailController;
 
   @override
@@ -22,12 +23,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     final user = Provider.of<AuthProvider>(context, listen: false).user;
     _nameController = TextEditingController(text: user?['name']);
+    _usernameController = TextEditingController(text: user?['username']);
     _emailController = TextEditingController(text: user?['email']);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     super.dispose();
   }
@@ -176,6 +179,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _usernameController,
+                  readOnly: true,
+                  decoration: _inputDecoration('Username', Icons.alternate_email).copyWith(
+                    fillColor: Colors.grey.shade200,
+                    hintStyle: TextStyle(color: Colors.grey.shade500),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 TextFormField(

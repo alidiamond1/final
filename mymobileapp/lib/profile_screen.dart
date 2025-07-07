@@ -91,11 +91,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                // Text(
+                //   user?['email'] ?? 'email@example.com',
+                //   style: TextStyle(
+                //     color: Colors.white.withOpacity(0.8),
+                //     fontSize: screenWidth * 0.035,
+                //   ),
+                // ),
+                SizedBox(height: 4),
                 Text(
-                  user?['email'] ?? 'email@example.com',
+                  "@${user?['username'] ?? 'username'}",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: screenWidth * 0.035,
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: screenWidth * 0.04,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],

@@ -42,13 +42,13 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(String username, String password) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final data = await AuthService.login(email, password);
+      final data = await AuthService.login(username, password);
       _user = data['user'];
       _isAuthenticated = true;
     } catch (e) {
@@ -61,15 +61,15 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> register(String name, String email, String password) async {
+  Future<void> register(String name, String username, String email, String password) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await AuthService.register(name, email, password);
+      await AuthService.register(name, username, email, password);
       // Login after successful registration
-      await login(email, password);
+      await login(username, password);
     } catch (e) {
       _error = e.toString();
       _isAuthenticated = false;
