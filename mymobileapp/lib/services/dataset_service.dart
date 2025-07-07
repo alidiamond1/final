@@ -29,7 +29,7 @@ class Dataset {
       title: json['title'] ?? 'Untitled Dataset',
       description: json['description'] ?? 'No description',
       type: json['type'] ?? 'unknown',
-      size: json['size'] ?? 'unknown',
+      size: (json['size'] ?? 0).toString(),
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
     );
   }
@@ -37,7 +37,7 @@ class Dataset {
 
 class DatasetService {
   // Backend API URL - Change this to match your server's address
-  static const String baseUrl = 'http://10.36.192.22:3000/api/datasets';
+  static const String baseUrl = 'http://10.109.100.22:3000/api/datasets';
   
   // Get all datasets
   static Future<List<Dataset>> getDatasets() async {

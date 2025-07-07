@@ -263,9 +263,18 @@ export const saveProfileImage = async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
         
+        const userResponse = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            profileImage: user.profileImage,
+            bio: user.bio
+        };
+
         res.status(200).json({ 
             message: "Profile image updated successfully",
-            profileImage: profileImagePath
+            user: userResponse
         });
     } catch (error) {
         console.error('Error saving profile image:', error);

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../services/auth_service.dart';
 
@@ -5,12 +6,14 @@ class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
   Map<String, dynamic>? _user;
   bool _isLoading = false;
+  Key _profileImageKey = UniqueKey();
   String? _error;
 
   bool get isAuthenticated => _isAuthenticated;
   Map<String, dynamic>? get user => _user;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  Key get profileImageKey => _profileImageKey;
 
   AuthProvider() {
     _checkAuthStatus();
@@ -95,5 +98,63 @@ class AuthProvider with ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  Future<bool> updateProfile(String name, String email) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final updatedUser = await AuthService.updateProfile(name, email);
+      _user = updatedUser;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> changePassword(String oldPassword, String newPassword) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await AuthService.changePassword(oldPassword, newPassword);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> uploadProfileImage(File imageFile) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    bool success = false;
+    try {
+      final updatedUser = await AuthService.uploadProfileImage(imageFile);
+      _user = updatedUser;
+      _profileImageKey = UniqueKey(); // Update the key to force a rebuild
+      success = true;
+    } catch (e) {
+      _error = e.toString();
+      success = false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+    return success;
   }
 }

@@ -28,14 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
       const DatasetListScreen(),
       // Allow all users to upload datasets
       const UploadDatasetScreen(),
-      ProfileAndLoginPage(
-        onTabChange: (int index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        isAuthScreen: false,
-      ),
+      const ProfileAndLoginPage(),
     ];
     
     // Fetch datasets when app starts
