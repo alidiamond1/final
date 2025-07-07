@@ -41,6 +41,9 @@ import {
 import { getAllUsers, updateUser, deleteUser } from '../../api/auth';
 import { themeColors } from '../../theme';
 import axios from 'axios';
+import defaultProfileImage from '../../assets/profile.jpg';
+
+const API_URL = 'http://localhost:3000';
 
 const Users = () => {
   const theme = useTheme();
@@ -400,16 +403,13 @@ const Users = () => {
                       <TableCell>
                         <Box display="flex" alignItems="center">
                           <Avatar
+                            src={user.profileImage ? `${API_URL}/${user.profileImage}` : defaultProfileImage}
                             sx={{
-                              bgcolor: themeColors.primary[500],
-                              width: 32,
-                              height: 32,
+                              width: 40,
+                              height: 40,
                               mr: 2,
-                              fontSize: 14,
                             }}
-                          >
-                            {user.name.charAt(0)}
-                          </Avatar>
+                          />
                           <Typography variant="body1">{user.name}</Typography>
                         </Box>
                       </TableCell>

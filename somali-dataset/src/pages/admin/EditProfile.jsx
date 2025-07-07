@@ -97,9 +97,10 @@ const EditProfile = () => {
       
       const result = await updateProfileImage(selectedImage);
       
-      // Update preview with the new image URL from server
-      if (result && result.profileImage) {
-        setPreviewImage(`${API_URL}/${result.profileImage}`);
+      // The backend now returns the full user object.
+      // We need to access the profileImage from the user property.
+      if (result && result.user && result.user.profileImage) {
+        setPreviewImage(`${API_URL}/${result.user.profileImage}`);
       }
       
       setSuccess(true);
