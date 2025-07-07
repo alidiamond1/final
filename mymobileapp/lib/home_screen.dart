@@ -133,16 +133,6 @@ class HomeContent extends StatelessWidget {
                           ),
                         ],
                       ),
-                      actions: [
-                        IconButton(
-                          icon: const Icon(Icons.notifications_none_rounded, color: Colors.black),
-                          onPressed: () {},
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.search_rounded, color: Colors.black),
-                          onPressed: () {},
-                        ),
-                      ],
                     ),
                     
                     // Content
