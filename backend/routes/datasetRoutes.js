@@ -7,14 +7,14 @@ const router = express.Router();
 // Create dataset - requires authentication and file upload
 router.post("/", protect, upload.single('file'), createDataset);
 
-// Get a single dataset - requires authentication
-router.get("/:id", protect, getDataset);
+// Get dataset statistics - requires admin privileges
+router.get("/stats", protect, admin, getDatasetStats);
 
 // Get all datasets - requires authentication
 router.get("/", protect, getAllDatasets);
 
-// Get dataset statistics - requires admin privileges
-router.get("/stats", protect, admin, getDatasetStats);
+// Get a single dataset - requires authentication
+router.get("/:id", protect, getDataset);
 
 // Download dataset - no authentication required to allow direct downloads from mobile
 router.get("/:id/download", downloadDataset);

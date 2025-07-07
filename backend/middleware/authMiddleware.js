@@ -14,20 +14,16 @@ export const protect = async (req, res, next) => {
         // Log token details for debugging
         console.log('Token decoded:', decoded);
         
-        // Check if user exists
-        const user = await User.findById(decoded.id);
+        // Find user by ID from token, but exclude the password
+        const user = await User.findById(decoded.id).select('-password');
+        
         if (!user) {
             console.log('User not found for ID:', decoded.id);
             return res.status(401).json({ error: "User not found" });
         }
         
-        // Attach user to request
-        req.user = {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role
-        };
+        // Attach the complete user object (without password) to the request
+        req.user = user;
         
         console.log('User authenticated:', req.user.email, 'Role:', req.user.role);
         next();

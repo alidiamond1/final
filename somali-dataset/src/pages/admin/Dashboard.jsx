@@ -26,7 +26,7 @@ import {
 import { ResponsiveBar } from "@nivo/bar";
 import { ResponsivePie } from "@nivo/pie";
 import { ResponsiveLine } from "@nivo/line";
-import { getAllDatasets } from "../../api/datasets";
+import { getAllDatasets, getStats } from "../../api/datasets";
 import { getAllUsers } from "../../api/auth";
 import { themeColors } from "../../theme";
 import defaultProfileImage from "../../assets/profile.jpg";
@@ -57,6 +57,16 @@ ChartJS.register(
 );
 
 const API_URL = "http://localhost:3000";
+
+// Helper function to format bytes into a readable string (KB, MB, GB)
+const formatBytes = (bytes, decimals = 2) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+};
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -188,42 +198,33 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        // Fetch all data in parallel, including the new stats endpoint
+        const [datasetsData, usersData, statsData] = await Promise.all([
+          getAllDatasets(),
+          getAllUsers(),
+          getStats(),
+        ]);
 
-        // Fetch real data from API
-        console.log("Fetching datasets and users...");
-        const fetchedDatasets = await getAllDatasets();
-        console.log("Datasets fetched:", fetchedDatasets);
+        setDatasets(datasetsData || []);
+        setUsers(usersData || []);
 
-        const fetchedUsers = await getAllUsers();
-        console.log("Users fetched:", fetchedUsers);
+        // Process data for charts
+        const categoryDistribution = processCategories(datasetsData || []);
+        const downloadHistory = generateDownloadData(datasetsData || []);
 
-        // Save the raw data
-        setDatasets(fetchedDatasets || []);
-        setUsers(fetchedUsers || []);
-
-        // Generate category data from actual datasets
-        const categories = processCategories(fetchedDatasets);
-        setCategoryData(categories);
-
-        // Generate download data - simulate based on dataset creation dates
-        const downloads = generateDownloadData(fetchedDatasets);
-        setDownloadData(downloads);
-
-        // Calculate stats
-        const userCount = Array.isArray(fetchedUsers) ? fetchedUsers.length : 0;
+        // Set stats directly from the API response
         setStats({
-          datasets: fetchedDatasets.length,
-          users: userCount,
-          downloads: calculateTotalDownloads(fetchedDatasets),
-          storage: calculateStorageUsed(fetchedDatasets),
+          datasets: (datasetsData || []).length,
+          users: (usersData || []).length,
+          downloads: statsData.downloads || 0,
+          storage: formatBytes(statsData.storage || 0),
         });
 
-        console.log("Dashboard data processed successfully.");
+        setCategoryData(categoryDistribution);
+        setDownloadData(downloadHistory);
       } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-        setError(
-          "Failed to load dashboard data: " + (err.message || "Unknown error")
-        );
+        console.error("Failed to fetch dashboard data:", err);
+        setError("Could not load dashboard data. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -297,62 +298,7 @@ const Dashboard = () => {
     }));
   };
 
-  // Calculate total downloads (simulated)
-  const calculateTotalDownloads = (datasets) => {
-    // For now, simulate download counts based on dataset count and creation dates
-    let totalDownloads = 0;
 
-    datasets.forEach((dataset) => {
-      if (dataset.createdAt) {
-        const creationDate = new Date(dataset.createdAt);
-        const now = new Date();
-        const ageInDays = Math.floor(
-          (now - creationDate) / (1000 * 60 * 60 * 24)
-        );
-
-        // Simulate more downloads for older datasets
-        const estimatedDownloads = Math.floor(
-          ageInDays * (Math.random() * 5 + 1)
-        );
-        totalDownloads += Math.max(10, estimatedDownloads); // Minimum 10 downloads per dataset
-      } else {
-        totalDownloads += 10; // Default value for datasets without creation date
-      }
-    });
-
-    return totalDownloads;
-  };
-
-  // Calculate storage used by all datasets
-  const calculateStorageUsed = (datasets) => {
-    let totalSizeInMB = 0;
-
-    datasets.forEach((dataset) => {
-      if (dataset.size) {
-        let size = 0;
-        if (typeof dataset.size === "string") {
-          // Extract numeric value from size string (e.g., "2.5 MB" -> 2.5)
-          const sizeMatch = dataset.size.match(/(\d+\.?\d*)/);
-          if (sizeMatch && sizeMatch[1]) {
-            size = parseFloat(sizeMatch[1]);
-
-            // Convert to MB if necessary
-            if (dataset.size.includes("KB")) {
-              size = size / 1024;
-            } else if (dataset.size.includes("GB")) {
-              size = size * 1024;
-            }
-          }
-        } else if (typeof dataset.size === "number") {
-          // Assuming the number is already in MB.
-          size = dataset.size;
-        }
-        totalSizeInMB += size;
-      }
-    });
-
-    return Math.round(totalSizeInMB * 100) / 100; // Round to 2 decimal places
-  };
 
   if (loading) {
     return (

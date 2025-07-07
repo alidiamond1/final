@@ -263,40 +263,38 @@ export const downloadDataset = async (req, res) => {
 // Get dataset statistics (total downloads and storage)
 export const getDatasetStats = async (req, res) => {
     try {
-        // Fetch all datasets and compute totals in JavaScript to avoid schema inconsistencies
+        // Fetch all datasets to compute totals
         const datasets = await Dataset.find({}, 'size downloads');
 
         let totalDownloads = 0;
         let totalStorage = 0; // in bytes
 
         datasets.forEach(ds => {
-            // ----- downloads -----
-            const downloads = (ds.downloads && typeof ds.downloads === 'number') ? ds.downloads : 0;
-            totalDownloads += downloads;
+            // Safely add downloads
+            totalDownloads += (ds.downloads && typeof ds.downloads === 'number') ? ds.downloads : 0;
 
-            // ----- size -----
+            // Safely calculate and add storage
             let sizeBytes = 0;
-            if (typeof ds.size === 'number') {
-                sizeBytes = ds.size;
-            } else if (typeof ds.size === 'string') {
-                // handles "2.5 MB", "1024 KB", "512" (as string), "512B"
-                const match = ds.size.match(/(\d+\.?\d*)\s*(B|KB|MB|GB|TB)?/i);
-                if (match) {
-                    const value = parseFloat(match[1]);
-                    const unit = (match[2] || 'B').toUpperCase();
-                    const multipliers = { B: 1, KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3, TB: 1024 ** 4 };
-                    sizeBytes = value * (multipliers[unit] || 1);
+            if (ds.size) { // Check if size is not null or undefined
+                if (typeof ds.size === 'number') {
+                    sizeBytes = ds.size;
+                } else if (typeof ds.size === 'string') {
+                    const match = ds.size.match(/(\d+\.?\d*)\s*(B|KB|MB|GB|TB)?/i);
+                    if (match) {
+                        const value = parseFloat(match[1]);
+                        const unit = (match[2] || 'B').toUpperCase();
+                        const multipliers = { B: 1, KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3, TB: 1024 ** 4 };
+                        sizeBytes = value * (multipliers[unit] || 1);
+                    }
                 }
             }
             totalStorage += sizeBytes;
         });
 
-        // Format storage to MB for dashboard
-        const storageMB = (totalStorage / (1024 * 1024)).toFixed(0);
-
+        // Return raw numbers for the frontend to format
         return res.json({
             downloads: totalDownloads,
-            storage: `${storageMB} MB`
+            storage: totalStorage, // Send raw bytes
         });
     } catch (error) {
         console.error('❌ Error fetching dataset stats:', error);

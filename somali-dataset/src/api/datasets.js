@@ -4,11 +4,7 @@ import api from './auth';
 export const getStats = async () => {
   try {
     const response = await api.get('/datasets/stats');
-    // Only return total downloads and storage used
-    return {
-      downloads: response.data.downloads,
-      storage: response.data.storage,
-    };
+    return response.data;
   } catch (error) {
     throw error.response?.data || error.message || 'Failed to fetch stats';
   }
