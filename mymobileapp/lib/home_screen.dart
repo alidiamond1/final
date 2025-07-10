@@ -10,6 +10,7 @@ import 'profile_screen.dart';
 import 'upload_dataset_screen.dart';
 import 'services/auth_service.dart';
 import 'download_manager.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 
 // Main Screen Widget that holds the Bottom Navigation Bar
 class HomeScreen extends StatefulWidget {
@@ -54,48 +55,57 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _currentIndex,
         children: _pages,
       ),
-      bottomNavigationBar: _buildModernBottomNavBar(),
+      bottomNavigationBar: _buildGoogleNavBar(),
     );
   }
 
-  // Custom modern-looking Bottom Navigation Bar
-  Widget _buildModernBottomNavBar() {
+  Widget _buildGoogleNavBar() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(25),
-          topRight: Radius.circular(25),
-        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            blurRadius: 15,
-            offset: const Offset(0, -5),
-          ),
+            blurRadius: 20,
+            color: Colors.black.withOpacity(.1),
+          )
         ],
       ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(25),
-          topRight: Radius.circular(25),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _onTabTapped,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF2C5282), // A deep blue color
-          unselectedItemColor: Colors.grey.shade400,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontSize: 12),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.storage_rounded), label: 'Datasets'),
-            BottomNavigationBarItem(icon: Icon(Icons.cloud_upload_rounded), label: 'Upload'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_2_rounded), label: 'Profile'),
-          ],
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
+          child: GNav(
+            rippleColor: Colors.grey[300]!,
+            hoverColor: Colors.grey[100]!,
+            gap: 8,
+            activeColor: Colors.white,
+            iconSize: 24,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            duration: const Duration(milliseconds: 400),
+            tabBackgroundColor: const Color(0xFF2C5282), // Same deep blue color
+            color: Colors.grey.shade600,
+            tabs: const [
+              GButton(
+                icon: Icons.home_filled,
+                text: 'Home',
+              ),
+              GButton(
+                icon: Icons.storage_rounded,
+                text: 'Datasets',
+              ),
+              GButton(
+                icon: Icons.cloud_upload_rounded,
+                text: 'Upload',
+              ),
+              GButton(
+                icon: Icons.person_2_rounded,
+                text: 'Profile',
+              ),
+            ],
+            selectedIndex: _currentIndex,
+            onTabChange: (index) {
+              _onTabTapped(index);
+            },
+          ),
         ),
       ),
     );
