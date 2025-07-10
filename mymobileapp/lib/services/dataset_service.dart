@@ -10,16 +10,16 @@ class Dataset {
   final String id;
   final String title;
   final String description;
-  final String type;
-  final String size;
+  final String fileType;
+  final int sizeInBytes;
   final DateTime? createdAt;
   
   Dataset({
     required this.id,
     required this.title,
     required this.description,
-    required this.type,
-    required this.size,
+    required this.fileType,
+    required this.sizeInBytes,
     this.createdAt,
   });
   
@@ -28,8 +28,8 @@ class Dataset {
       id: json['_id'] ?? json['id'] ?? '',
       title: json['title'] ?? 'Untitled Dataset',
       description: json['description'] ?? 'No description',
-      type: json['type'] ?? 'unknown',
-      size: (json['size'] ?? 0).toString(),
+      fileType: json['fileType'] ?? json['type'] ?? 'unknown',
+      sizeInBytes: (json['sizeInBytes'] ?? json['size'] ?? 0) as int,
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
     );
   }
@@ -37,7 +37,7 @@ class Dataset {
 
 class DatasetService {
   // Backend API URL - Change this to match your server's address
-  static const String baseUrl = 'http://10.109.100.22:3000/api/datasets';
+  static const String baseUrl = 'http://10.202.244.22:3000/api/datasets';
   
   // Get all datasets
   static Future<List<Dataset>> getDatasets() async {

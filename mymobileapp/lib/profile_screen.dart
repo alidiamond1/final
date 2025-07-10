@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -52,9 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    final imageUrl = user?['profileImage'] != null
-        ? '${AuthService.serverBaseUrl}/${user!['profileImage'].replaceAll('\\', '/')}?v=${authProvider.profileImageKey.hashCode}'
-        : null;
+    final imageString = user?['profileImage'] as String?;
 
     return Container(
       height: screenHeight * 0.3,
@@ -78,9 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   key: authProvider.profileImageKey, // Force rebuild when image changes
                   radius: screenWidth * 0.11,
                   backgroundColor: Colors.white,
-                  backgroundImage: (imageUrl != null
-                      ? NetworkImage(imageUrl)
-                      : const AssetImage('assets/profile.jpg')) as ImageProvider,
+                  backgroundImage: _getImageProvider(imageString),
                 ),
                 SizedBox(height: screenHeight * 0.015),
                 Text(
@@ -150,6 +147,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Text(label, style: TextStyle(color: Colors.grey[600], fontSize: screenWidth * 0.03)),
       ],
     );
+  }
+
+  ImageProvider _getImageProvider(String? imageString) {
+    if (imageString == null || imageString.isEmpty) {
+      return const AssetImage('assets/profile.jpg');
+    }
+    if (imageString.startsWith('data:image')) {
+      try {
+        final parts = imageString.split(',');
+        if (parts.length == 2) {
+          return MemoryImage(base64Decode(parts[1]));
+        }
+      } catch (e) {
+        print('Error decoding Base64 image on profile screen: $e');
+        return const AssetImage('assets/profile.jpg');
+      }
+    }
+    if (imageString.startsWith('http')) {
+      return NetworkImage(imageString);
+    }
+    // Fallback for older, non-URL paths if necessary
+    return AssetImage('assets/profile.jpg');
   }
 
   Widget _buildMenu(BuildContext context, AuthProvider authProvider) {

@@ -1,12 +1,17 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:ui';
 import 'providers/auth_provider.dart';
 import 'providers/dataset_provider.dart';
 import 'services/dataset_service.dart';
 import 'dataset_list_screen.dart';
-import 'profile_and_login_page.dart';
+import 'profile_screen.dart';
 import 'upload_dataset_screen.dart';
+import 'services/auth_service.dart';
+import 'download_manager.dart';
 
+// Main Screen Widget that holds the Bottom Navigation Bar
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -15,7 +20,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const primaryBlue = Color(0xFF144BA6);
   int _currentIndex = 0;
 
   late final List<Widget> _pages;
@@ -26,653 +30,439 @@ class _HomeScreenState extends State<HomeScreen> {
     _pages = [
       const HomeContent(),
       const DatasetListScreen(),
-      // Allow all users to upload datasets
       const UploadDatasetScreen(),
-      const ProfileAndLoginPage(),
+      const ProfileScreen(),
     ];
-    
-    // Fetch datasets when app starts
+
+    // Fetch datasets once after the first frame is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<DatasetProvider>(context, listen: false).fetchDatasets();
+    });
+  }
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_currentIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 10,
-              spreadRadius: 0,
-            ),
-          ],
+      // IndexedStack preserves the state of each page when switching tabs
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
+      bottomNavigationBar: _buildModernBottomNavBar(),
+    );
+  }
+
+  // Custom modern-looking Bottom Navigation Bar
+  Widget _buildModernBottomNavBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(25),
+          topRight: Radius.circular(25),
         ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 15,
+            offset: const Offset(0, -5),
           ),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-              BottomNavigationBarItem(icon: Icon(Icons.dataset_rounded), label: 'Datasets'),
-              BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline_rounded), label: 'Upload'),
-              BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
-            ],
-            selectedItemColor: primaryBlue,
-            unselectedItemColor: Colors.grey,
-            showSelectedLabels: true,
-            showUnselectedLabels: true,
-            type: BottomNavigationBarType.fixed,
-            elevation: 20,
-          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(25),
+          topRight: Radius.circular(25),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: _onTabTapped,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFF2C5282), // A deep blue color
+          unselectedItemColor: Colors.grey.shade400,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          unselectedLabelStyle: const TextStyle(fontSize: 12),
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.storage_rounded), label: 'Datasets'),
+            BottomNavigationBarItem(icon: Icon(Icons.cloud_upload_rounded), label: 'Upload'),
+            BottomNavigationBarItem(icon: Icon(Icons.person_2_rounded), label: 'Profile'),
+          ],
         ),
       ),
     );
   }
 }
 
-class HomeContent extends StatelessWidget {
-  static const primaryBlue = Color(0xFF144BA6);
-
+// --- Home Content Widget (The actual home screen UI) --- //
+class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<DatasetProvider>(
-      builder: (context, datasetProvider, _) {
-        final datasets = datasetProvider.datasets;
-        final isLoading = datasetProvider.isLoading;
+  State<HomeContent> createState() => _HomeContentState();
+}
 
-        return Scaffold(
-          body: SafeArea(
-            child: isLoading && datasets.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    // App Bar
-                    SliverAppBar(
-                      floating: true,
-                      pinned: false,
-                      backgroundColor: Colors.white,
-                      elevation: 0,
-                      title: Row(
+class _HomeContentState extends State<HomeContent> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final datasetProvider = Provider.of<DatasetProvider>(context);
+    final datasets = datasetProvider.datasets;
+    final isLoading = datasetProvider.isLoading;
+
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: isLoading && datasets.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  _buildHeader(context),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          CircleAvatar(
-                            backgroundImage: const AssetImage('assets/profile.jpg'),
-                            radius: 18,
-                            backgroundColor: Colors.grey[200],
-                          ),
-                          const SizedBox(width: 12),
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Somali Dataset',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: primaryBlue,
-                                ),
+                          const SizedBox(height: 20),
+                          _AnimatedFadeSlide(controller: _animationController, child: _buildSearchBar()),
+                          const SizedBox(height: 24),
+                          _AnimatedFadeSlide(controller: _animationController, delay: 0.1, child: _buildSectionTitle('Categories')),
+                          const SizedBox(height: 16),
+                          _AnimatedFadeSlide(controller: _animationController, delay: 0.2, child: _buildCategoriesSection()),
+                          const SizedBox(height: 24),
+                          if (datasets.isNotEmpty)
+                            _AnimatedFadeSlide(controller: _animationController, delay: 0.3, child: _buildSectionTitle('Featured Dataset')),
+                          if (datasets.isNotEmpty)
+                            const SizedBox(height: 16),
+                          if (datasets.isNotEmpty)
+                            _AnimatedFadeSlide(controller: _animationController, delay: 0.4, child: _buildFeaturedDatasetCard(context, datasets.first))
+                          else if (!isLoading)
+                            _buildEmptyDatasetCard(),
+                          if (datasets.isNotEmpty)
+                            const SizedBox(height: 24),
+                          if (datasets.length > 1)
+                            _AnimatedFadeSlide(
+                              controller: _animationController,
+                              delay: 0.5,
+                              child: _buildSectionTitle(
+                                'Recent Datasets',
+                                showViewAll: datasets.length > 5, // 1 featured + 4 recent
+                                onViewAllTap: () {
+                                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => const DatasetListScreen()));
+                                },
                               ),
-                              Text(
-                                'Repository',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
+                              
+                            ),
+                          if (datasets.length > 1)
+                            const SizedBox(height: 16),
+                          if (datasets.length > 1)
+                            _AnimatedFadeSlide(
+                              controller: _animationController,
+                              delay: 0.6,
+                              child: GridView.builder(
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 0.85,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
                                 ),
+                                itemCount: datasets.skip(1).take(4).length,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  return _buildDatasetGridItem(context, datasets.skip(1).toList()[index]);
+                                },
                               ),
-                            ],
-                          ),
+                            )
+                          else if (datasets.isEmpty && isLoading)
+                            const Center(child: CircularProgressIndicator()),
+                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
-                    
-                    // Content
-                    SliverPadding(
-                      padding: const EdgeInsets.all(16),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          // Welcome Card
-                          _buildWelcomeCard(context),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Dataset Categories
-                          _buildCategoriesSection(context),
-                          
-                          const SizedBox(height: 24),
-                          
-                          // Featured Dataset
-                          const Padding(
-                            padding: EdgeInsets.only(left: 4, bottom: 12),
-                            child: Text(
-                              'Featured Dataset',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          
-                          if (datasets.isNotEmpty)
-                            _buildFeaturedDatasetCard(context, datasets[0])
-                          else
-                            _buildEmptyDatasetCard(),
-                            
-                          const SizedBox(height: 24),
-                          
-                          // Recent Datasets
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.only(left: 4),
-                                child: Text(
-                                  'Recent Datasets',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              TextButton.icon(
-                                onPressed: () {
-                                  // Navigate to datasets tab
-                                  final homeScreenState = context.findAncestorStateOfType<_HomeScreenState>();
-                                  if (homeScreenState != null) {
-                                    homeScreenState.setState(() {
-                                      homeScreenState._currentIndex = 1;
-                                    });
-                                  }
-                                },
-                                icon: const Icon(Icons.arrow_forward, size: 16, color: primaryBlue),
-                                label: const Text(
-                                  'View All',
-                                  style: TextStyle(
-                                    color: primaryBlue,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          
-                          // Recent datasets grid
-                          if (datasets.isNotEmpty)
-                            _buildRecentDatasetsGrid(context, datasets)
-                          else
-                            _buildEmptyDatasetCard(),
-                        ]),
-                      ),
-                    ),
-                  ],
-                ),
-          ),
-        );
-      },
+                  ),
+                ],
+              ),
+      ),
     );
   }
 
-  Widget _buildWelcomeCard(BuildContext context) {
-    final userName = Provider.of<AuthProvider>(context).user?['name'] ?? 'Guest';
-    
-    return Card(
+  // --- UI Helper Methods --- //
+
+  Widget _buildHeader(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+    final userName = user?['name']?.split(' ').first ?? 'User';
+    final imageString = user?['profileImage'] as String?;
+
+    return SliverAppBar(
+      backgroundColor: Colors.transparent,
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      color: primaryBlue.withOpacity(0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      pinned: true,
+      automaticallyImplyLeading: false,
+      title: _AnimatedFadeSlide(
+        controller: _animationController,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const CircleAvatar(
-                  backgroundColor: primaryBlue,
-                  child: Icon(Icons.waving_hand_rounded, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome, $userName',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text(
-                        'Explore Somali language datasets',
-                        style: TextStyle(
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Discover and download high-quality Somali language datasets for research and development.',
-              style: TextStyle(
-                color: Colors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: () {
-                // Navigate to datasets tab
-                final homeScreenState = context.findAncestorStateOfType<_HomeScreenState>();
-                if (homeScreenState != null) {
-                  homeScreenState.setState(() {
-                    homeScreenState._currentIndex = 1;
-                  });
-                }
-              },
-              icon: const Icon(Icons.explore_rounded),
-              label: const Text('Explore Datasets'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
+            Text('Hello, $userName 👋', style: const TextStyle(color: Colors.black87, fontSize: 24, fontWeight: FontWeight.bold)),
+            const Text('Ready to explore some datasets?', style: TextStyle(color: Colors.grey, fontSize: 14)),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildCategoriesSection(BuildContext context) {
-    final categories = [
-      {'title': 'CSV', 'icon': Icons.table_chart_rounded, 'color': Colors.green},
-      {'title': 'Excel', 'icon': Icons.grid_on_rounded, 'color': Colors.teal},
-      {'title': 'JSON', 'icon': Icons.code_rounded, 'color': Colors.amber},
-      {'title': 'Text', 'icon': Icons.text_fields_rounded, 'color': primaryBlue},
-    ];
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4, bottom: 12),
-          child: Text(
-            'Categories',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        SizedBox(
-          height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
-            physics: const BouncingScrollPhysics(),
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              return _buildCategoryCard(
-                title: category['title'] as String,
-                icon: category['icon'] as IconData,
-                color: category['color'] as Color,
-              );
-            },
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 16.0),
+          child: CircleAvatar(
+            key: authProvider.profileImageKey, // Force rebuild when image changes
+            radius: 22,
+            backgroundColor: Colors.grey.shade200,
+            backgroundImage: _getImageProvider(imageString),
+            child: imageString == null
+                ? const Icon(
+                    Icons.person,
+                    size: 28,
+                    color: Colors.grey,
+                  )
+                : null,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildCategoryCard({
-    required String title,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      width: 110,
-      margin: const EdgeInsets.only(right: 12),
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: color.withOpacity(0.2)),
+  ImageProvider _getImageProvider(String? imageString) {
+    if (imageString == null || imageString.isEmpty) {
+      return const AssetImage('assets/profile.jpg'); // Default image
+    }
+
+    if (imageString.startsWith('http')) {
+      // Handle regular URL
+      return NetworkImage(imageString);
+    } else if (imageString.startsWith('data:image')) {
+      // Handle Base64 data URI
+      try {
+        final parts = imageString.split(',');
+        if (parts.length == 2) {
+          final bytes = base64Decode(parts[1]);
+          return MemoryImage(bytes);
+        }
+      } catch (e) {
+        print('Error decoding Base64 image on home screen: $e');
+        return const AssetImage('assets/profile.jpg'); // Fallback on error
+      }
+    }
+
+    // Fallback for any other case, including old file paths
+    return const AssetImage('assets/profile.jpg');
+  }
+
+  Widget _buildSearchBar() {
+    return TextField(
+      decoration: InputDecoration(
+        hintText: 'Search for datasets...',
+        prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 28),
+        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+      ),
+    );
+  }
+
+    Widget _buildSectionTitle(String title, {bool showViewAll = false, VoidCallback? onViewAllTap}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween, // Tani waxay kala fogaynaysaa labada qoraal
+      children: [
+        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        if (showViewAll)
+          InkWell(
+            onTap: onViewAllTap, // Halkan ayuu ka dhacayaa tagitaanka shaashadda kale
+            child: const Text(
+              'View All',
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF2C5282),
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
-        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoriesSection() {
+    final datasets = Provider.of<DatasetProvider>(context).datasets;
+    final categories = datasets.map((d) => d.fileType).toSet().toList();
+
+    if (categories.isEmpty) {
+      return const Center(child: Text('No categories available.'));
+    }
+
+    return SizedBox(
+      height: 110,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: categories.length,
+        physics: const BouncingScrollPhysics(),
+        itemBuilder: (context, index) {
+          final categoryTitle = categories[index];
+          return _buildCategoryCard(
+            title: categoryTitle,
+            icon: _getTypeIcon(categoryTitle),
+            color: _getTypeColor(categoryTitle),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCategoryCard({required String title, required IconData icon, required Color color}) {
+    return Container(
+      width: 100,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 30, color: color),
+          const SizedBox(height: 8),
+          Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 14)),
+        ],
       ),
     );
   }
 
   Widget _buildFeaturedDatasetCard(BuildContext context, Dataset dataset) {
     return Container(
-      height: 200,
+      height: 220,
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
-          colors: [primaryBlue, primaryBlue.withOpacity(0.8)],
+          colors: [Colors.blueGrey.shade800, Colors.blueGrey.shade600],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: primaryBlue.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          )
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            // Background pattern
-            Positioned(
-              right: -30,
-              bottom: -30,
-              child: Icon(
-                Icons.dataset_rounded,
-                size: 180,
-                color: Colors.white.withOpacity(0.1),
-              ),
-            ),
-            
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(20),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () {
+               _showDatasetDetails(context, dataset);
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top row with type and download icon
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          dataset.type.toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.download_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const Spacer(),
-                  
-                  // Title and description
-                  Text(
-                    dataset.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text(dataset.title, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, shadows: [Shadow(blurRadius: 5, color: Colors.black54)])),
                   const SizedBox(height: 8),
-                  Text(
-                    dataset.description,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  
-                  const Spacer(),
-                  
-                  // Bottom row with metadata
+                  Text(dataset.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
-                      _buildInfoChip(dataset.type, Colors.white),
+                      _infoChip(Icons.folder_zip_rounded, dataset.fileType.toUpperCase()),
                       const SizedBox(width: 8),
-                      _buildInfoChip(dataset.size, Colors.white),
-                      const Spacer(),
-                      const Text(
-                        "Featured",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      _infoChip(Icons.cloud_download_rounded, '${(dataset.sizeInBytes / 1024 / 1024).toStringAsFixed(2)} MB'),
                     ],
-                  ),
+                  )
                 ],
               ),
             ),
-            
-            // Clickable overlay
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  // Navigate to dataset details
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Viewing ${dataset.title} details'),
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                },
-                splashColor: Colors.white.withOpacity(0.1),
-                highlightColor: Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildInfoChip(String label, Color textColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentDatasetsGrid(BuildContext context, List<Dataset> datasets) {
-    final displayDatasets = datasets.length > 4 ? datasets.sublist(0, 4) : datasets;
-    
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: displayDatasets.length,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemBuilder: (context, index) {
-        return _buildDatasetGridItem(context, displayDatasets[index]);
-      },
     );
   }
 
   Widget _buildDatasetGridItem(BuildContext context, Dataset dataset) {
-    final Color typeColor = _getTypeColor(dataset.type);
-    
+    final typeColor = _getTypeColor(dataset.fileType);
+    final typeIcon = _getTypeIcon(dataset.fileType);
+
     return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
+      elevation: 2,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
-        onTap: () {
-          // Navigate to dataset details
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Viewing ${dataset.title} details'),
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        },
         borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          _showDatasetDetails(context, dataset);
+        },
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Type icon
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: typeColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      _getTypeIcon(dataset.type),
-                      color: typeColor,
-                      size: 20,
-                    ),
-                  ),
-                  const Spacer(),
-                  Icon(
-                    Icons.more_vert,
-                    color: Colors.grey[400],
-                    size: 20,
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: typeColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(typeIcon, color: typeColor, size: 24),
               ),
-              
               const Spacer(),
-              
-              // Title
               Text(
                 dataset.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              
-              // Description
               Text(
-                dataset.description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              
-              const Spacer(),
-              
-              // Type and size
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: typeColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      dataset.type,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: typeColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      dataset.size,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                  ),
-                ],
+                dataset.fileType.toUpperCase(),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -693,7 +483,7 @@ class HomeContent extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.inventory_2_outlined, // Fixed icon name
+            Icons.inventory_2_outlined,
             size: 48,
             color: Colors.grey[400],
           ),
@@ -720,41 +510,211 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Color _getTypeColor(String fileType) {
-    switch (fileType.toLowerCase()) {
-      case 'csv':
-        return Colors.green;
-      case 'excel':
-        return Colors.teal;
-      case 'json':
-        return Colors.amber;
-      case 'text':
-        return primaryBlue;
-      case 'audio':
-        return Colors.purple;
-      case 'dictionary':
-        return Colors.orange;
-      default:
-        return Colors.grey;
+  Color _getTypeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'csv': return Colors.green.shade400;
+      case 'excel': return Colors.teal.shade400;
+      case 'json': return Colors.amber.shade400;
+      case 'text': return Colors.blue.shade400;
+      case 'image': return Colors.orange.shade400;
+      case 'images': return Colors.orange.shade400;
+      case 'audio': return Colors.purple.shade400;
+      case 'video': return Colors.red.shade400;
+      case 'dictionary': return Colors.brown.shade400;
+      default: return Colors.grey.shade400;
     }
   }
 
-  IconData _getTypeIcon(String fileType) {
-    switch (fileType.toLowerCase()) {
-      case 'csv':
-        return Icons.table_chart_rounded;
-      case 'excel':
-        return Icons.grid_on_rounded;
-      case 'json':
-        return Icons.code_rounded;
-      case 'text':
-        return Icons.description_rounded;
-      case 'audio':
-        return Icons.headphones_rounded;
-      case 'dictionary':
-        return Icons.menu_book_rounded;
-      default:
-        return Icons.insert_drive_file_rounded;
+  IconData _getTypeIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'csv': return Icons.table_chart_rounded;
+      case 'excel': return Icons.grid_on_rounded;
+      case 'json': return Icons.code_rounded;
+      case 'text': return Icons.text_fields_rounded;
+      
+      default: return Icons.insert_drive_file_rounded;
     }
   }
-} 
+
+  void _showDatasetDetails(BuildContext context, Dataset dataset) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+          ),
+          child: SingleChildScrollView(
+            controller: controller,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 50,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    dataset.title,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      dataset.description,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Dataset Information',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDetailCard('Type', dataset.fileType, Icons.category),
+                  _buildDetailCard('Size', '${(dataset.sizeInBytes / 1024 / 1024).toStringAsFixed(2)} MB', Icons.data_usage),
+                  if (dataset.createdAt != null)
+                    _buildDetailCard('Added', _formatDate(dataset.createdAt!), Icons.calendar_today),
+                  _buildDetailCard('ID', dataset.id, Icons.fingerprint),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: DownloadManager(context).buildDownloadButton(dataset),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailCard(String label, String value, IconData icon) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      color: Colors.grey[50],
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF2C5282), size: 24),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Widget _infoChip(IconData icon, String label) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
+              Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// --- Animation Widget --- //
+class _AnimatedFadeSlide extends StatelessWidget {
+  final AnimationController controller;
+  final Widget child;
+  final double delay;
+
+  const _AnimatedFadeSlide({required this.controller, required this.child, this.delay = 0.0});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final animation = CurvedAnimation(
+          parent: controller,
+          curve: Interval(delay, 1.0, curve: Curves.easeOutCubic),
+        );
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.2),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}

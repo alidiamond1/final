@@ -41,14 +41,14 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
         _filteredDatasets = List.from(datasets);
       } else {
         _filteredDatasets = datasets.where((dataset) {
-          bool matchesQuery = query.isEmpty || 
+          bool matchesQuery = query.isEmpty ||
               dataset.title.toLowerCase().contains(query.toLowerCase()) ||
               dataset.description.toLowerCase().contains(query.toLowerCase()) ||
-              dataset.type.toLowerCase().contains(query.toLowerCase());
-          
-          bool matchesCategory = _selectedCategory == null || 
-              dataset.type.toLowerCase() == _selectedCategory!.toLowerCase();
-          
+              dataset.fileType.toLowerCase().contains(query.toLowerCase());
+
+          bool matchesCategory = _selectedCategory == null ||
+              dataset.fileType.toLowerCase() == _selectedCategory!.toLowerCase();
+
           return matchesQuery && matchesCategory;
         }).toList();
       }
@@ -159,7 +159,7 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
                   // Search and filter section
                   _buildSearchField(),
                   const SizedBox(height: 16),
-                  
+
                   // Category filters
                   _buildCategoryFilters(datasets),
                   const SizedBox(height: 16),
@@ -189,21 +189,21 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
                   const SizedBox(height: 12),
                   _filteredDatasets.isEmpty
                       ? const Expanded(
-                          child: Center(
-                            child: Text(
-                              'No datasets found',
-                              style: TextStyle(fontSize: 16, color: Colors.grey),
-                            ),
-                          ),
-                        )
+                    child: Center(
+                      child: Text(
+                        'No datasets found',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ),
+                  )
                       : Expanded(
-                          child: ListView.builder(
-                            itemCount: _filteredDatasets.length,
-                            itemBuilder: (context, index) {
-                              return _buildDatasetCard(_filteredDatasets[index]);
-                            },
-                          ),
-                        ),
+                    child: ListView.builder(
+                      itemCount: _filteredDatasets.length,
+                      itemBuilder: (context, index) {
+                        return _buildDatasetCard(_filteredDatasets[index]);
+                      },
+                    ),
+                  ),
                 ],
               ),
             );
@@ -217,7 +217,7 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
     // Extract unique categories from datasets and filter to only supported types
     final supportedTypes = ['csv', 'excel', 'json', 'text'];
     final categories = datasets
-        .map((dataset) => dataset.type.toLowerCase())
+        .map((dataset) => dataset.fileType.toLowerCase())
         .where((type) => supportedTypes.contains(type))
         .toSet()
         .toList();
@@ -284,9 +284,9 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
     // Calculate stats
     final totalDatasets = datasets.length;
     final Map<String, int> typeCount = {};
-    
+
     for (var dataset in datasets) {
-      typeCount[dataset.type] = (typeCount[dataset.type] ?? 0) + 1;
+      typeCount[dataset.fileType] = (typeCount[dataset.fileType] ?? 0) + 1;
     }
 
     return Container(
@@ -308,14 +308,14 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatCard(
-                'Total Datasets', 
+                'Total Datasets',
                 totalDatasets.toString(),
                 Icons.dataset,
                 primaryBlue,
               ),
               if (typeCount.isNotEmpty)
                 _buildStatCard(
-                  'Most Common Type', 
+                  'Most Common Type',
                   _getMostCommonType(typeCount),
                   Icons.category,
                   Colors.green,
@@ -329,17 +329,17 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
 
   String _getMostCommonType(Map<String, int> typeCount) {
     if (typeCount.isEmpty) return 'None';
-    
+
     String mostCommonType = '';
     int highestCount = 0;
-    
+
     typeCount.forEach((type, count) {
       if (count > highestCount) {
         highestCount = count;
         mostCommonType = type;
       }
     });
-    
+
     return mostCommonType;
   }
 
@@ -389,7 +389,7 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
     final isDownloading = downloadStatus?.status == DownloadState.inProgress;
     final isDownloaded = downloadStatus?.status == DownloadState.completed;
     final hasError = downloadStatus?.status == DownloadState.error;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
@@ -425,9 +425,9 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                _pill(dataset.type),
+                _pill(dataset.fileType.toUpperCase()),
                 const SizedBox(width: 8),
-                _pill(dataset.size),
+                _pill('${(dataset.sizeInBytes / 1024 / 1024).toStringAsFixed(2)} MB'),
                 const SizedBox(width: 8),
                 // Added timestamp if available
                 if (dataset.createdAt != null)
@@ -438,8 +438,8 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
         ),
         children: [
           const SizedBox(height: 8),
-          _buildDetailRow('Type', dataset.type, Icons.category),
-          _buildDetailRow('Size', dataset.size, Icons.data_usage),
+          _buildDetailRow('Type', dataset.fileType, Icons.category),
+          _buildDetailRow('Size', '${(dataset.sizeInBytes / 1024 / 1024).toStringAsFixed(2)} MB', Icons.data_usage),
           if (dataset.createdAt != null)
             _buildDetailRow('Added', _formatDate(dataset.createdAt!), Icons.calendar_today),
           const SizedBox(height: 12),
@@ -587,7 +587,7 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
     final isDownloading = downloadStatus?.status == DownloadState.inProgress;
     final isDownloaded = downloadStatus?.status == DownloadState.completed;
     final hasError = downloadStatus?.status == DownloadState.error;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -649,8 +649,8 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildDetailCard('Type', dataset.type, Icons.category),
-                  _buildDetailCard('Size', dataset.size, Icons.data_usage),
+                  _buildDetailCard('Type', dataset.fileType, Icons.category),
+                  _buildDetailCard('Size', '${(dataset.sizeInBytes / 1024 / 1024).toStringAsFixed(2)} MB', Icons.data_usage),
                   if (dataset.createdAt != null)
                     _buildDetailCard('Added', _formatDate(dataset.createdAt!), Icons.calendar_today),
                   _buildDetailCard('ID', dataset.id, Icons.fingerprint),
@@ -718,7 +718,7 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
       child: Text(label, style: const TextStyle(fontSize: 12)),
     );
   }
-  
+
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }

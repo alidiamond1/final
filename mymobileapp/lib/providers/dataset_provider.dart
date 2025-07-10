@@ -137,7 +137,7 @@ class DatasetProvider extends ChangeNotifier {
 
       final savedDir = externalDir.path;
 
-      final fileExtension = _getFileExtension(dataset.type);
+      final fileExtension = _getFileExtension(dataset.fileType);
       final fileName =
           '${dataset.title.replaceAll(' ', '_').toLowerCase()}$fileExtension';
       final downloadUrl =

@@ -1,8 +1,7 @@
 import User from "../model/userModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import path from "path";
-import fs from "fs";
+
 import multer from "multer";
 
 const generateToken = (user) => {
@@ -189,29 +188,11 @@ export const updatePassword = async (req, res) => {
     }
 };
 
-// Configure multer storage for profile images
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = 'uploads/profiles';
-        
-        // Create directory if it doesn't exist
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        // Use user ID and timestamp for unique filename
-        const userId = req.params.id;
-        const fileExt = path.extname(file.originalname);
-        const fileName = `profile_${userId}_${Date.now()}${fileExt}`;
-        cb(null, fileName);
-    }
-});
+// Configure multer to use memory storage
+const storage = multer.memoryStorage();
 
 // Create multer upload instance
-const upload = multer({ 
+const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
@@ -226,7 +207,7 @@ const upload = multer({
 // Middleware to handle profile image upload
 export const uploadProfileImage = (req, res, next) => {
     const uploadSingle = upload.single('profileImage');
-    
+
     uploadSingle(req, res, (err) => {
         if (err) {
             return res.status(400).json({ error: err.message });
@@ -235,37 +216,41 @@ export const uploadProfileImage = (req, res, next) => {
     });
 };
 
-// Controller to save profile image path to user
+// Controller to save profile image to database as Base64
 export const saveProfileImage = async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: "No image file provided" });
         }
-        
+
         const { id } = req.params;
-        const profileImagePath = req.file.path.replace(/\\/g, '/'); // Normalize path for all OS
-        
-        // Update user with profile image path
+
+        // Create a data URI for the image
+        const mimeType = req.file.mimetype;
+        const base64Data = req.file.buffer.toString('base64');
+        const dataUri = `data:${mimeType};base64,${base64Data}`;
+
+        // Update user with the Base64 data URI
         const user = await User.findByIdAndUpdate(
-            id, 
-            { profileImage: profileImagePath },
+            id,
+            { profileImage: dataUri },
             { new: true }
         );
-        
+
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
-        
+
         const userResponse = {
             _id: user._id,
             name: user.name,
             email: user.email,
             role: user.role,
-            profileImage: user.profileImage,
+            profileImage: user.profileImage, // This will now be the data URI
             bio: user.bio
         };
 
-        res.status(200).json({ 
+        res.status(200).json({
             message: "Profile image updated successfully",
             user: userResponse
         });

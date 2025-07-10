@@ -7,8 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   // Replace with your actual API URL. For Android emulator, use 10.0.2.2
-  // static const String baseUrl = 'http://10.109.100.22:3000/api/users';
-  static const String serverBaseUrl = 'http://10.109.100.22:3000';
+  //  static const String baseUrl = 'http://10.202.244.22:3000/api/users';
+  static const String serverBaseUrl = 'http://10.202.244.22:3000';
   static const String baseUrl = '$serverBaseUrl/api/users';
 
   // Store auth token

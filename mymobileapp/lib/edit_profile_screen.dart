@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -119,9 +120,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
-    final imageUrl = authProvider.user?['profileImage'] != null
-        ? '${AuthService.serverBaseUrl}/${authProvider.user!['profileImage'].replaceAll('\\', '/')}?v=${authProvider.profileImageKey.hashCode}'
-        : null;
+    final imageString = authProvider.user?['profileImage'] as String?;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
@@ -141,9 +140,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   key: authProvider.profileImageKey, // Force rebuild when image changes
                   radius: 60,
                   backgroundColor: Colors.grey.shade300,
-                  backgroundImage: (imageUrl != null
-                      ? NetworkImage(imageUrl)
-                      : const AssetImage('assets/profile.jpg')) as ImageProvider,
+                  backgroundImage: _getImageProvider(imageString),
                 ),
                 Positioned(
                   bottom: 0,
@@ -224,6 +221,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ],
       ),
     );
+  }
+
+  ImageProvider _getImageProvider(String? imageString) {
+    if (imageString == null || imageString.isEmpty) {
+      return const AssetImage('assets/profile.jpg');
+    }
+
+    if (imageString.startsWith('http')) {
+      // Handle regular URL
+      return NetworkImage(imageString);
+    } else if (imageString.startsWith('data:image')) {
+      // Handle Base64 data URI
+      try {
+        final parts = imageString.split(',');
+        if (parts.length == 2) {
+          final bytes = base64Decode(parts[1]);
+          return MemoryImage(bytes);
+        }
+      } catch (e) {
+        print('Error decoding Base64 image: $e');
+        return const AssetImage('assets/profile.jpg'); // Fallback on error
+      }
+    }
+
+    // Fallback for any other case
+    return const AssetImage('assets/profile.jpg');
   }
 
   InputDecoration _inputDecoration(String label, IconData icon) {

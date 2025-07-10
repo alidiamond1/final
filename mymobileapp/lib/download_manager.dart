@@ -12,7 +12,7 @@ import 'services/auth_service.dart';
 extension DatasetDownloadExtension on Dataset {
   /// Get the appropriate file extension based on dataset type
   String get fileExtension {
-    switch (type.toLowerCase()) {
+    switch (fileType.toLowerCase()) {
       case 'text':
         return '.txt';
       case 'csv':
@@ -27,30 +27,30 @@ extension DatasetDownloadExtension on Dataset {
         return '.zip';
     }
   }
-  
+
   /// Generate a filename for downloading
   String get downloadFilename {
     return '${title.replaceAll(' ', '_').toLowerCase()}$fileExtension';
   }
-  
+
   /// Check if the dataset is currently downloading in the given context
   bool isDownloading(BuildContext context) {
     final downloadStatus = Provider.of<DatasetProvider>(context).downloadStatus[id];
     return downloadStatus?.status == DownloadState.inProgress;
   }
-  
+
   /// Check if the dataset has been downloaded in the given context
   bool isDownloaded(BuildContext context) {
     final downloadStatus = Provider.of<DatasetProvider>(context).downloadStatus[id];
     return downloadStatus?.status == DownloadState.completed;
   }
-  
+
   /// Check if there was an error downloading the dataset in the given context
   bool hasDownloadError(BuildContext context) {
     final downloadStatus = Provider.of<DatasetProvider>(context).downloadStatus[id];
     return downloadStatus?.status == DownloadState.error;
   }
-  
+
   /// Download the dataset in the given context
   Future<String?> download(BuildContext context) async {
     final provider = Provider.of<DatasetProvider>(context, listen: false);
@@ -61,11 +61,11 @@ extension DatasetDownloadExtension on Dataset {
 /// Helper class for handling dataset downloads
 class DownloadManager {
   final BuildContext context;
-  
+
   DownloadManager(this.context);
 
 
-  
+
   /// Download a dataset using flutter_downloader
   Future<void> downloadDataset(Dataset dataset) async {
     try {
@@ -129,7 +129,7 @@ class DownloadManager {
       }
     }
   }
-  
+
   /// Show success message after download completes
   void _showSuccessMessage(Dataset dataset, String filePath) {
     if (context.mounted) {
@@ -157,7 +157,7 @@ class DownloadManager {
       );
     }
   }
-  
+
   /// Helper method to get download directory
   Future<Directory> _getDownloadDir() async {
     try {
@@ -166,17 +166,17 @@ class DownloadManager {
           // First attempt: Get Android Downloads directory (API level >= 29)
           final directory = await getExternalStorageDirectory();
           debugPrint('📁 External storage path: ${directory?.path}');
-          
+
           if (directory != null) {
             // Create a custom folder that will be visible to the user
             // in the Android/data/[package_name]/files/SomaliDatasets folder
             final downloadDir = Directory('${directory.path}/SomaliDatasets');
-            
+
             // Create directory if it doesn't exist
             if (!await downloadDir.exists()) {
               await downloadDir.create(recursive: true);
             }
-            
+
             debugPrint('📁 Created download directory at: ${downloadDir.path}');
             return downloadDir;
           } else {
@@ -184,16 +184,16 @@ class DownloadManager {
           }
         } catch (e) {
           debugPrint('❌ Error getting external storage: $e');
-          
+
           // Second attempt: Use application documents directory
           final appDir = await getApplicationDocumentsDirectory();
           debugPrint('📁 App documents directory: ${appDir.path}');
-          
+
           final downloadsDir = Directory('${appDir.path}/SomaliDatasets');
           if (!await downloadsDir.exists()) {
             await downloadsDir.create(recursive: true);
           }
-          
+
           debugPrint('📁 Created fallback download directory at: ${downloadsDir.path}');
           return downloadsDir;
         }
@@ -228,7 +228,7 @@ class DownloadManager {
       return downloadsDir;
     }
   }
-  
+
   /// Build a download button with appropriate state and progress indicator
   Widget buildDownloadButton(Dataset dataset) {
     return Consumer<DatasetProvider>(
@@ -238,9 +238,9 @@ class DownloadManager {
         final isDownloaded = downloadStatus?.status == DownloadState.completed;
         final hasError = downloadStatus?.status == DownloadState.error;
         final progress = downloadStatus?.progress ?? 0.0;
-        
+
         const Color primaryBlue = Color(0xFF144BA6);
-        
+
         if (isDownloading) {
           // Show download progress with percentage
           return Column(
@@ -310,4 +310,4 @@ class DownloadManager {
       },
     );
   }
-} 
+}
