@@ -62,9 +62,16 @@ const EditProfile = () => {
         bio: user.bio || '',
       }));
       
-      // If user has a profile image, use it
+      // Handle profile image display
       if (user.profileImage) {
-        setPreviewImage(`${API_URL}/${user.profileImage}`);
+        // Check if the image is a Base64 string or a relative path
+        if (user.profileImage.startsWith('data:image')) {
+          setPreviewImage(user.profileImage); // It's a Base64 URI, use it directly
+        } else {
+          setPreviewImage(`${API_URL}/${user.profileImage}`); // It's a relative path
+        }
+      } else {
+        setPreviewImage(defaultProfileImage); // Fallback to default image
       }
     }
   }, [user]);
@@ -90,27 +97,29 @@ const EditProfile = () => {
   
   const handleImageUpload = async () => {
     if (!selectedImage) return;
-    
+
     try {
       setImageUploading(true);
       setError(null);
-      
-      const result = await updateProfileImage(selectedImage);
-      
-      // The backend now returns the full user object.
-      // We need to access the profileImage from the user property.
-      if (result && result.user && result.user.profileImage) {
-        setPreviewImage(`${API_URL}/${result.user.profileImage}`);
-      }
-      
+
+      // The `updateProfileImage` function from context should handle the API call
+      // and update the global user state.
+      await updateProfileImage(selectedImage);
+
+      // After the context updates the user, the useEffect hook will automatically
+      // update the preview image. We don't need to set it manually here.
+
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-      
-      // Clear selected image since it's now uploaded
+
+      // Clear the selected file input
       setSelectedImage(null);
+      // Reset the file input visually
+      document.getElementById('profile-image-input').value = '';
+
     } catch (err) {
       console.error('Failed to upload image:', err);
-      setError(err.message || 'Failed to upload profile image');
+      setError(err.message || 'Failed to upload profile image. Please try again.');
     } finally {
       setImageUploading(false);
     }
@@ -242,11 +251,11 @@ const EditProfile = () => {
                 <input
                   accept="image/*"
                   style={{ display: 'none' }}
-                  id="profile-image-upload"
+                  id="profile-image-input"
                   type="file"
                   onChange={handleImageChange}
                 />
-                <label htmlFor="profile-image-upload">
+                <label htmlFor="profile-image-input">
                   <Button
                     variant="outlined"
                     component="span"

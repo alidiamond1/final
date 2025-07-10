@@ -153,36 +153,26 @@ export const updateUserPassword = async (passwordData) => {
 
 export const uploadProfileImage = async (imageFile) => {
   try {
-    // Get the current user from localStorage
     const currentUser = JSON.parse(localStorage.getItem('admin_user') || '{}');
-    
     if (!currentUser || !currentUser._id) {
       throw new Error('User not found');
     }
-    
-    // Create form data to send the image
+
     const formData = new FormData();
     formData.append('profileImage', imageFile);
-    
-    // Create a custom config for the multipart/form-data
-    const config = {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-      }
-    };
-    
-    // Call the API to upload the image
-    const response = await axios.post(
-      `${API_URL}/users/${currentUser._id}/profile-image`, 
-      formData,
-      config
+
+    // When using FormData with axios, you should NOT set the 'Content-Type' header manually.
+    // Axios will automatically set it to 'multipart/form-data' with the correct boundary.
+    // The auth interceptor will handle the 'Authorization' header.
+    const response = await api.post(
+      `/users/${currentUser._id}/profile-image`,
+      formData
     );
-    
+
     // Update localStorage with the updated user data including the new image path
-    const updatedUser = { ...currentUser, profileImage: response.data.profileImage };
+    const updatedUser = { ...currentUser, profileImage: response.data.user.profileImage };
     localStorage.setItem('admin_user', JSON.stringify(updatedUser));
-    
+
     return response.data;
   } catch (error) {
     console.error('Error uploading profile image:', error);

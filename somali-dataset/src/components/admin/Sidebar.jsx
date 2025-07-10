@@ -45,9 +45,13 @@ const SidebarNav = ({ onClose, currentMode }) => {
   // Get user profile image URL
   const getProfileImageUrl = () => {
     if (user && user.profileImage) {
-      return `${API_URL}/${user.profileImage}`;
+      // Check if the image is a Base64 string or a relative path
+      if (user.profileImage.startsWith('data:image')) {
+        return user.profileImage; // It's a Base64 URI, use it directly
+      }
+      return `${API_URL}/${user.profileImage}`; // It's a relative path
     }
-    return defaultProfileImage;
+    return defaultProfileImage; // Fallback to default image
   };
 
   useEffect(() => {
