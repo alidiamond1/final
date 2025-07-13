@@ -1,64 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'auth_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dataset_provider.dart';
 import 'home_screen.dart';
-import 'auth_screen.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'dart:ui';
+import 'dart:isolate';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize flutter_downloader
+  await FlutterDownloader.initialize(debug: true, ignoreSsl: true);
+
+  // Register the standalone callback
+  FlutterDownloader.registerCallback(downloadCallback);
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => DatasetProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
+/// Standalone download callback
+@pragma('vm:entry-point')
+void downloadCallback(String id, int status, int progress) {
+  final SendPort? send = IsolateNameServer.lookupPortByName('downloader_send_port');
+  send?.send([id, status, progress]);
+}
+
+
 class MyApp extends StatelessWidget {
+  static const primaryBlue = Color(0xFF144BA6);
+
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (context) => AuthProvider()),
-        ChangeNotifierProvider(create: (context) => DatasetProvider()),
-      ],
-      child: MaterialApp(
-        title: 'Dataset App',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          scaffoldBackgroundColor: Colors.grey[50],
-          // Use Noto Sans which has good support for Somali characters
-          fontFamily: GoogleFonts.notoSans().fontFamily,
-          textTheme: TextTheme(
-            // Ensure all text uses the right font family
-            bodyMedium: TextStyle(
-              fontFamily: GoogleFonts.notoSans().fontFamily,
-              fontSize: 14,
-            ),
-            bodyLarge: TextStyle(
-              fontFamily: GoogleFonts.notoSans().fontFamily,
-              fontSize: 16,
-            ),
-            titleMedium: TextStyle(
-              fontFamily: GoogleFonts.notoSans().fontFamily,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-            titleLarge: TextStyle(
-              fontFamily: GoogleFonts.notoSans().fontFamily,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            labelLarge: TextStyle(
-              fontFamily: GoogleFonts.notoSans().fontFamily,
-              fontSize: 14,
-            ),
-          ),
-        ),
-        home: Consumer<AuthProvider>(
-          builder: (context, authProvider, child) {
-            return authProvider.isAuthenticated ? const HomeScreen() : const AuthScreen();
-          },
-        ),
+    return MaterialApp(
+      title: 'Somali Dataset Repository',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: MyApp.primaryBlue,
+        colorScheme: ColorScheme.fromSeed(seedColor: MyApp.primaryBlue),
+        fontFamily: 'Arial',
+        useMaterial3: true,
+      ),
+      home: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          // Check if loading
+          if (authProvider.isLoading) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          // Redirect based on auth status
+          return authProvider.isAuthenticated
+              ? const HomeScreen()
+              : const AuthScreen();
+        },
       ),
     );
   }

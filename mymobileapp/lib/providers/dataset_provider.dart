@@ -7,6 +7,7 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import '../services/dataset_service.dart';
+import '../services/auth_service.dart';
 
 class DatasetProvider extends ChangeNotifier {
   List<Dataset> datasets = [];
@@ -72,13 +73,6 @@ class DatasetProvider extends ChangeNotifier {
     IsolateNameServer.removePortNameMapping('downloader_send_port');
   }
 
-  @pragma('vm:entry-point')
-  static void downloadCallback(String id, int status, int progress) {
-    final SendPort? send =
-        IsolateNameServer.lookupPortByName('downloader_send_port');
-    send?.send([id, status, progress]);
-  }
-
   Future<void> fetchDatasets() async {
     isLoading = true;
     error = null;
@@ -141,10 +135,18 @@ class DatasetProvider extends ChangeNotifier {
       final fileName =
           '${dataset.title.replaceAll(' ', '_').toLowerCase()}$fileExtension';
       final downloadUrl =
-          '${DatasetService.baseUrl}/datasets/download/${dataset.id}';
+          '${DatasetService.baseUrl}/${dataset.id}/download';
+
+      // Add authentication headers for the download request
+      final token = await AuthService.getToken();
+      final headers = <String, String>{};
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
 
       final taskId = await FlutterDownloader.enqueue(
         url: downloadUrl,
+        headers: headers, // Pass headers here
         savedDir: savedDir,
         fileName: fileName,
         showNotification: true,

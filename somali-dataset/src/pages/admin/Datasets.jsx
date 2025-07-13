@@ -321,12 +321,12 @@ const Datasets = () => {
                           sx={{
                             backgroundColor: 
                               dataset.type === 'text' ? '#e3f2fd' :
-                              dataset.type === 'audio' ? '#e8f5e9' :
-                              dataset.type === 'dictionary' ? '#fff3e0' : '#f5f5f5',
+                              dataset.type === 'excel' ? '#e8f5e9' :
+                              dataset.type === 'csv' ? '#fff3e0' : '#f5f5f5',
                             color: 
                               dataset.type === 'text' ? '#1565c0' :
-                              dataset.type === 'audio' ? '#2e7d32' :
-                              dataset.type === 'dictionary' ? '#e65100' : '#616161',
+                              dataset.type === 'excel' ? '#2e7d32' :
+                              dataset.type === 'csv' ? '#e65100' : '#616161',
                             fontWeight: 500,
                           }}
                         />
@@ -447,10 +447,9 @@ const Datasets = () => {
                 onChange={handleEditFormChange}
               >
                 <MenuItem value="text">Text</MenuItem>
-                <MenuItem value="audio">Audio</MenuItem>
-                <MenuItem value="image">Image</MenuItem>
-                <MenuItem value="video">Video</MenuItem>
-                <MenuItem value="dictionary">Dictionary</MenuItem>
+                <MenuItem value="excel">Excel</MenuItem>
+                <MenuItem value="csv">CSV</MenuItem>
+                <MenuItem value="json">JSON</MenuItem>
               </Select>
             </FormControl>
             <TextField

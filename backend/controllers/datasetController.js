@@ -1,4 +1,5 @@
 import Dataset from "../model/datasetModel.js";
+import User from "../model/userModel.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -219,6 +220,19 @@ export const downloadDataset = async (req, res) => {
         const { id } = req.params;
         console.log(`📥 Downloading dataset: ${id}`);
 
+        // Get user information if available
+        const userId = req.query.userId || null;
+        let user = null;
+        
+        if (userId) {
+            try {
+                user = await User.findById(userId);
+            } catch (err) {
+                console.error(`❌ Error finding user: ${err.message}`);
+                // Continue even if user lookup fails
+            }
+        }
+
         // Atomically increment the download count before sending the file
         await Dataset.findByIdAndUpdate(id, { $inc: { downloads: 1 } });
 
@@ -228,6 +242,23 @@ export const downloadDataset = async (req, res) => {
             console.error(`❌ Dataset not found: ${id}`);
             return res.status(404).json({ error: "Dataset not found" });
         }
+        
+        // Record download in the Download collection
+        /* try {
+            await Download.create({
+                dataset: dataset._id,
+                user: userId || undefined,
+                datasetName: dataset.title,
+                userName: user ? user.name : 'Anonymous',
+                userRole: user ? user.role : 'guest',
+                ipAddress: req.ip || req.connection.remoteAddress,
+                userAgent: req.headers['user-agent']
+            });
+            console.log(`✅ Download recorded for dataset: ${dataset.title}`);
+        } catch (err) {
+            console.error(`❌ Error recording download: ${err.message}`);
+            // Continue even if recording fails
+        } */
         
         // If the dataset has file content, serve it
         if (dataset.fileContent && dataset.fileName) {
@@ -240,6 +271,7 @@ export const downloadDataset = async (req, res) => {
                 // Set appropriate headers for download
                 res.set('Content-Type', contentType);
                 res.set('Content-Disposition', `attachment; filename="${dataset.fileName}"`);
+                // Use the length of the buffer for an accurate Content-Length
                 res.set('Content-Length', dataset.fileContent.length);
                 
                 // Send the file content directly from the database
@@ -395,6 +427,77 @@ export const updateDataset = async (req, res) => {
         });
     } catch (error) {
         console.error("❌ Error updating dataset:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Get download statistics for admin
+export const getDownloadStats = async (req, res) => {
+    try {
+        // Basic statistics
+        const totalDownloads = await Download.countDocuments();
+        const uniqueUsers = await Download.distinct('user').countDocuments();
+        const uniqueDatasets = await Download.distinct('dataset').countDocuments();
+        
+        // Recent downloads (last 30)
+        const recentDownloads = await Download.find()
+            .sort({ downloadedAt: -1 })
+            .limit(30)
+            .populate('dataset', 'title')
+            .populate('user', 'name username')
+            .select('-__v');
+            
+        // Most downloaded datasets (top 10)
+        const mostDownloaded = await Dataset.find()
+            .sort({ downloads: -1 })
+            .limit(10)
+            .select('title downloads');
+            
+        // Downloads by day (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const downloadsByDay = await Download.aggregate([
+            {
+                $match: {
+                    downloadedAt: { $gte: thirtyDaysAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$downloadedAt" },
+                        month: { $month: "$downloadedAt" },
+                        day: { $dayOfMonth: "$downloadedAt" }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 }
+            }
+        ]);
+        
+        // Format the results
+        const downloadsByDayFormatted = downloadsByDay.map(item => {
+            const date = new Date(item._id.year, item._id.month - 1, item._id.day);
+            return {
+                date: date.toISOString().split('T')[0],
+                count: item.count
+            };
+        });
+        
+        // Return all statistics
+        res.status(200).json({
+            totalDownloads,
+            uniqueUsers,
+            uniqueDatasets,
+            recentDownloads,
+            mostDownloaded,
+            downloadsByDay: downloadsByDayFormatted
+        });
+    } catch (error) {
+        console.error('❌ Error fetching download stats:', error);
         res.status(500).json({ error: error.message });
     }
 };

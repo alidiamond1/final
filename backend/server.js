@@ -9,6 +9,11 @@ import datasetRoute from "./routes/datasetRoutes.js";
 import descriptionRoute from "./routes/descriptionRoutes.js";
 import connectDB from "./config/db.js";
 
+// Import models to ensure they're registered with mongoose
+import "./model/userModel.js";
+import "./model/datasetModel.js";
+import "./model/destcriptionModel.js";
+
 dotenv.config();
 
 // Get current directory path
@@ -52,24 +57,20 @@ function connectWithRetry() {
 connectWithRetry();
 const app = express();
 
-// Increase payload size limit for file uploads
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// A more robust CORS configuration
+const corsOptions = {
+    origin: '*', // You can restrict this to specific origins in production
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+    exposedHeaders: ['Content-Length', 'Content-Disposition'], // Expose necessary headers
+};
 
-// Configure CORS to accept connections from mobile emulator and devices
-app.use(cors({
-  // Allow all origins for development (you can restrict this in production)
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    callback(null, true);
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(cors(corsOptions));
+// Handle pre-flight requests across all routes
+app.options('*', cors(corsOptions));
 
-// Handle preflight requests
-app.options("*", cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from the uploads directory
 app.use('/uploads', (req, res, next) => {
