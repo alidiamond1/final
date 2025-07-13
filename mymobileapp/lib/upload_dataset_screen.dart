@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dataset_provider.dart';
 import 'services/dataset_service.dart';
@@ -52,11 +52,26 @@ class _UploadDatasetScreenState extends State<UploadDatasetScreen> {
 
   Future<void> _pickFile() async {
     try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      // Use file picker with allowed extensions - no need to request permission
+      // SAF (Storage Access Framework) handles permissions automatically
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['txt', 'csv', 'json', 'xlsx', 'xls'],
+        allowMultiple: false,
+      );
       
-      if (pickedFile != null) {
-        final file = File(pickedFile.path);
+      if (result != null && result.files.isNotEmpty) {
+        final platformFile = result.files.first;
+        
+        // Make sure we have a valid path
+        if (platformFile.path == null) {
+          setState(() {
+            _errorMessage = 'Could not get file path';
+          });
+          return;
+        }
+        
+        final file = File(platformFile.path!);
         final fileSize = file.lengthSync();
         String formattedSize;
         
@@ -73,8 +88,9 @@ class _UploadDatasetScreenState extends State<UploadDatasetScreen> {
         
         setState(() {
           _selectedFile = file;
-          _selectedFileName = pickedFile.path.split('/').last;
+          _selectedFileName = platformFile.name;
           _sizeController.text = formattedSize;
+          _errorMessage = null;
         });
       }
     } catch (e) {
