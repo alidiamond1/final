@@ -403,7 +403,7 @@ const Users = () => {
                       <TableCell>
                         <Box display="flex" alignItems="center">
                           <Avatar
-                            src={user.profileImage ? `${API_URL}/${user.profileImage}` : defaultProfileImage}
+                            src={user.profileImage || defaultProfileImage}
                             sx={{
                               width: 40,
                               height: 40,

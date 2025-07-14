@@ -21,6 +21,11 @@ const datasetSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+    },
     fileId: {
         type: String,
         default: null

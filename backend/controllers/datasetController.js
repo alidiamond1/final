@@ -143,7 +143,8 @@ export const createDataset = async (req, res) => {
             fileName,
             fileId,
             fileContent,
-            fileContentType
+            fileContentType,
+            user: req.user._id // Save the user ID from authentication
         });
         
         console.log('✅ Dataset created successfully:', dataset._id);
@@ -192,7 +193,10 @@ export const getDataset = async (req, res) => {
         const { id } = req.params;
         
         // Exclude fileContent from the response to save bandwidth
-        const dataset = await Dataset.findById(id).select('-fileContent');
+        // Populate user information
+        const dataset = await Dataset.findById(id)
+            .select('-fileContent')
+            .populate('user', 'name email profileImage');
         
         if (!dataset) {
             return res.status(404).json({ error: "Dataset not found" });
@@ -207,7 +211,10 @@ export const getDataset = async (req, res) => {
 export const getAllDatasets = async (req, res) => {
     try {
         // Exclude fileContent from the response to save bandwidth
-        const datasets = await Dataset.find().select('-fileContent');
+        // Populate user information
+        const datasets = await Dataset.find()
+            .select('-fileContent')
+            .populate('user', 'name email profileImage'); // Populate user data
         
         res.status(200).json({ datasets });
     } catch (error) {

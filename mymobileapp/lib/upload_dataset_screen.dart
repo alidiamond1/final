@@ -394,8 +394,9 @@ class _UploadDatasetScreenState extends State<UploadDatasetScreen> {
                                   const SizedBox(height: 8),
                                   TextFormField(
                                     controller: _sizeController,
+                                    readOnly: true,
                                     decoration: InputDecoration(
-                                      hintText: 'e.g., 50k samples',
+                                      hintText: 'File size (auto)',
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                         borderSide: BorderSide(color: Colors.grey.shade300),
@@ -410,11 +411,9 @@ class _UploadDatasetScreenState extends State<UploadDatasetScreen> {
                                       ),
                                       prefixIcon: const Icon(Icons.data_usage, color: primaryBlue),
                                       filled: true,
-                                      fillColor: Colors.grey.shade50,
+                                      fillColor: Colors.grey.shade100,
                                       contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                                     ),
-                                    validator: (value) => 
-                                      value!.isEmpty ? 'Please enter a size' : null,
                                   ),
                                 ],
                               ),

@@ -622,9 +622,6 @@ const Dashboard = () => {
                 <Typography variant="h6" fontWeight="bold" color="text.primary">
                   Downloads Over Time
                 </Typography>
-                <IconButton size="small">
-                  <MoreVertIcon />
-                </IconButton>
               </Box>
               <Box sx={{ height: 300 }}>
                 {downloadData.length > 0 ? (
@@ -682,9 +679,6 @@ const Dashboard = () => {
                 <Typography variant="h6" fontWeight="bold" color="text.primary">
                   Dataset Categories
                 </Typography>
-                <IconButton size="small">
-                  <MoreVertIcon />
-                </IconButton>
               </Box>
               <Box sx={{ height: 300, position: "relative" }}>
                 {categoryData.length > 0 ? (

@@ -90,7 +90,9 @@ const Datasets = () => {
       dataset => 
         dataset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         dataset.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        dataset.type.toLowerCase().includes(searchQuery.toLowerCase())
+        dataset.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (dataset.user && dataset.user.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (dataset.user && dataset.user.email.toLowerCase().includes(searchQuery.toLowerCase()))
     );
     
     setFilteredDatasets(filtered);
@@ -130,25 +132,14 @@ const Datasets = () => {
     
     try {
       setLoading(true);
-      console.log(`Attempting to delete dataset: ${selectedDataset._id}`);
-      
-      // Call delete dataset API
-      const result = await deleteDataset(selectedDataset._id);
-      console.log('Delete result:', result);
-      
-      // Update local state
+      await deleteDataset(selectedDataset._id);
       setDatasets(prevDatasets => prevDatasets.filter(dataset => dataset._id !== selectedDataset._id));
       setFilteredDatasets(prevDatasets => prevDatasets.filter(dataset => dataset._id !== selectedDataset._id));
-      
       setOpenDeleteDialog(false);
       setSelectedDataset(null);
-      
-      // Show success message
       alert('Dataset deleted successfully');
     } catch (err) {
       console.error('Error deleting dataset:', err);
-      
-      // Show error message to user
       alert(`Failed to delete dataset: ${err.toString()}`);
       setError('Failed to delete dataset: ' + (err.toString() || 'Unknown error'));
     } finally {
@@ -166,13 +157,7 @@ const Datasets = () => {
     
     try {
       setLoading(true);
-      console.log(`Attempting to update dataset: ${selectedDataset._id}`, editFormData);
-      
-      // Send update request to the server
       const result = await updateDataset(selectedDataset._id, editFormData);
-      console.log('Update result:', result);
-      
-      // Update local state with the response from the server
       const updatedDataset = result.dataset;
       
       setDatasets(prevDatasets => 
@@ -189,13 +174,9 @@ const Datasets = () => {
       
       setOpenEditDialog(false);
       setSelectedDataset(null);
-      
-      // Show success message
       alert('Dataset updated successfully');
     } catch (err) {
       console.error('Error updating dataset:', err);
-      
-      // Show error message to user
       alert(`Failed to update dataset: ${err.toString()}`);
       setError('Failed to update dataset: ' + (err.toString() || 'Unknown error'));
     } finally {
@@ -227,23 +208,8 @@ const Datasets = () => {
         <Typography variant="h2" fontWeight="bold" color={themeColors.grey[900]}>
           Dataset Management
         </Typography>
-        {/* <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          sx={{
-            backgroundColor: themeColors.primary[500],
-            '&:hover': {
-              backgroundColor: themeColors.primary[600],
-            },
-            borderRadius: 2,
-            px: 3,
-          }}
-        >
-          Add New Dataset
-        </Button> */}
       </Box>
 
-      {/* Search and Filter */}
       <Paper
         sx={{
           p: 2,
@@ -266,7 +232,6 @@ const Datasets = () => {
         />
       </Paper>
 
-      {/* Datasets Table */}
       <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
         <TableContainer>
           <Table>
@@ -276,19 +241,20 @@ const Datasets = () => {
                 <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Size</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Uploaded By</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }} align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading && datasets.length > 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
                     <CircularProgress size={30} />
                   </TableCell>
                 </TableRow>
               ) : filteredDatasets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
                     <Typography variant="body1" color={themeColors.grey[600]}>
                       No datasets found
                     </Typography>
@@ -336,6 +302,22 @@ const Datasets = () => {
                         {dataset.fileId && (
                           <Typography variant="caption" color="success.main" display="block">
                             ✓ File uploaded
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {dataset.user ? (
+                          <Box>
+                            <Typography variant="body2" fontWeight="500">
+                              {dataset.user.name}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {dataset.user.email}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            Not available
                           </Typography>
                         )}
                       </TableCell>
@@ -387,7 +369,6 @@ const Datasets = () => {
         />
       </Paper>
 
-      {/* Delete Dialog */}
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
@@ -406,7 +387,6 @@ const Datasets = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Edit Dialog */}
       <Dialog
         open={openEditDialog}
         onClose={() => setOpenEditDialog(false)}
