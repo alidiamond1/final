@@ -8,6 +8,7 @@ import 'services/auth_service.dart';
 import 'providers/dataset_provider.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
+import 'auth_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -216,6 +217,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: Colors.red,
             onTap: () async {
               await authProvider.logout();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const AuthScreen()),
+                (route) => false, // This removes all previous routes from the stack
+              );
             },
           ),
         ],

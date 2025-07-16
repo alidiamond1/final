@@ -8,12 +8,12 @@ import 'home_screen.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'dart:ui';
 import 'dart:isolate';
+import 'welcome_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize flutter_downloader
-  // Using kDebugMode is a good practice. `ignoreSsl` should be false in production.
   await FlutterDownloader.initialize(debug: kDebugMode, ignoreSsl: true);
 
   // Register the standalone callback
@@ -37,7 +37,6 @@ void downloadCallback(String id, int status, int progress) {
   send?.send([id, status, progress]);
 }
 
-
 class MyApp extends StatelessWidget {
   static const primaryBlue = Color(0xFF144BA6);
 
@@ -45,37 +44,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Wrapping with a Builder can help resolve some rendering issues
-    // that occur when the app is resumed from the background.
-    return Builder(builder: (context) {
-      return MaterialApp(
-        title: 'Somali Dataset Repository',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primaryColor: MyApp.primaryBlue,
-          colorScheme: ColorScheme.fromSeed(seedColor: MyApp.primaryBlue),
-          fontFamily: 'Arial',
-          useMaterial3: true,
-        ),
-        home: Consumer<AuthProvider>(
-          builder: (context, authProvider, _) {
-            // Check if loading
-            if (authProvider.isLoading) {
-              return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            }
-
-            // Redirect based on auth status
-            return authProvider.isAuthenticated
-                ? const HomeScreen()
-                : const AuthScreen();
-          },
-        ),
-      );
-    });
+    return MaterialApp(
+      title: 'Somali Dataset Repository',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: MyApp.primaryBlue,
+        colorScheme: ColorScheme.fromSeed(seedColor: MyApp.primaryBlue),
+        fontFamily: 'Arial',
+        useMaterial3: true,
+      ),
+      // Always start with welcome screen
+      home: const WelcomeScreen(),
+    );
   }
 }
 
