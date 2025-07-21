@@ -1,5 +1,5 @@
-name: mymobileapp
-description: "A new Flutter project."
+name: somali_dataset
+description: "A comprehensive collection of Somali language datasets."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -56,6 +56,7 @@ dependencies:
 
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.13.1
   flutter_test:
     sdk: flutter
 
@@ -72,8 +73,11 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
+    - assets/logo.png
     - assets/profile.jpg
-
+    - assets/images/onboarding1.png
+    - assets/images/onboarding2.png
+    - assets/images/onboarding3.png
 
 
 
@@ -113,3 +117,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/logo.png"
+  min_sdk_android: 21 # optional

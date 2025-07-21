@@ -312,7 +312,7 @@ const Datasets = () => {
                               {dataset.user.name}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {dataset.user.email}
+                            {dataset.user && dataset.user.name ? dataset.user.name : "Admin"}
                             </Typography>
                           </Box>
                         ) : (

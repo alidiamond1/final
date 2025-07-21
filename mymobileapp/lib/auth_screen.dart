@@ -11,22 +11,26 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
+class _AuthScreenState extends State<AuthScreen>
+    with SingleTickerProviderStateMixin {
   final _loginFormKey = GlobalKey<FormState>();
   final _registerFormKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _registerEmailController = TextEditingController();
-  final TextEditingController _registerPasswordController = TextEditingController();
+  final TextEditingController _registerPasswordController =
+      TextEditingController();
   final TextEditingController _registerNameController = TextEditingController();
-  final TextEditingController _registerUsernameController = TextEditingController();
-  final TextEditingController _registerConfirmPasswordController = TextEditingController();
-  
+  final TextEditingController _registerUsernameController =
+      TextEditingController();
+  final TextEditingController _registerConfirmPasswordController =
+      TextEditingController();
+
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
   bool _isLoginView = true; // Toggle between login and register views
-  
+
   late TabController _tabController;
 
   @override
@@ -62,7 +66,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
       try {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        
+
         // Call login method without trying to get a return value
         await authProvider.login(
           _emailController.text.trim(),
@@ -110,7 +114,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
       try {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        
+
         // Call register with all 4 required parameters
         await authProvider.register(
           _registerNameController.text.trim(),
@@ -136,7 +140,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text("Registration failed: ${authProvider.error ?? 'Unknown error'}"),
+              content: Text(
+                  "Registration failed: ${authProvider.error ?? 'Unknown error'}"),
               backgroundColor: Colors.red,
             ),
           );
@@ -147,9 +152,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
             SnackBar(
               content: Text("Error: ${e.toString()}"),
               backgroundColor: Colors.red,
-    ),
-  );
-}
+            ),
+          );
+        }
       } finally {
         if (mounted) {
           setState(() {
@@ -163,7 +168,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -183,7 +188,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 40),
-                  
+
                   // App Logo/Image
                   Container(
                     width: 100,
@@ -200,28 +205,15 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       ],
                     ),
                     child: ClipOval(
-                      child: Image.network(
-                        'https://source.unsplash.com/random/200x200/?somali',
+                      child: Image.asset(
+                        'assets/logo.png',
                         fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.dataset,
-                            size: 50,
-                            color: Color(0xFF144BA6),
-                          );
-                        },
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // App Title
                   const Text(
                     'Somali Dataset Repository',
@@ -231,9 +223,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       color: Colors.white,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   // Auth Card
                   Container(
                     width: double.infinity,
@@ -263,9 +255,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                             Tab(text: 'Register'),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Tab content with dynamic height
                         SizedBox(
                           // Use a reasonable height that can fit the content
@@ -276,35 +268,38 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               // Login Form - wrapped in SingleChildScrollView
                               SingleChildScrollView(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24.0),
                                   child: Form(
                                     key: _loginFormKey,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
                                         // Email field
                                         TextFormField(
                                           controller: _emailController,
-                                          keyboardType: TextInputType.emailAddress,
-                                          decoration: _inputDecoration('Username', Icons.person),
+                                          keyboardType:
+                                              TextInputType.emailAddress,
+                                          decoration: _inputDecoration(
+                                              'Username', Icons.person),
                                           validator: (value) {
                                             if (value == null || value.isEmpty) {
                                               return 'Please enter your username';
                                             }
-                                             return null;
-              },
-            ),
-                                        
-            const SizedBox(height: 16),
-                                        
+                                            return null;
+                                          },
+                                        ),
+
+                                        const SizedBox(height: 16),
+
                                         // Password field
-            TextFormField(
-              controller: _passwordController,
+                                        TextFormField(
+                                          controller: _passwordController,
                                           obscureText: !_isPasswordVisible,
                                           decoration: _inputDecoration(
                                             'Password',
                                             Icons.lock,
-                suffixIcon: IconButton(
+                                            suffixIcon: IconButton(
                                               icon: Icon(
                                                 _isPasswordVisible
                                                     ? Icons.visibility
@@ -313,79 +308,89 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                               ),
                                               onPressed: () {
                                                 setState(() {
-                                                  _isPasswordVisible = !_isPasswordVisible;
+                                                  _isPasswordVisible =
+                                                      !_isPasswordVisible;
                                                 });
                                               },
-                ),
-              ),
-              validator: (value) {
+                                            ),
+                                          ),
+                                          validator: (value) {
                                             if (value == null || value.isEmpty) {
                                               return 'Please enter your password';
                                             }
-                return null;
-              },
-            ),
-                                        
-                                        const SizedBox(height: 8),
-                                        
-                                        // Forgot password link
-                                        Align(
-                                          alignment: Alignment.centerRight,
-                                          child: TextButton(
-                                            onPressed: () {
-                                              // Handle forgot password
-                                            },
-                                            style: TextButton.styleFrom(
-                                              foregroundColor: const Color(0xFF144BA6),
-                                            ),
-                                            child: const Text('Forgot Password?'),
-                                          ),
+                                            return null;
+                                          },
                                         ),
-                                        
-            const SizedBox(height: 24),
-                                        
+
+                                        const SizedBox(height: 8),
+
+                                        // // Forgot password link
+                                        // Align(
+                                        //   alignment: Alignment.centerRight,
+                                        //   child: TextButton(
+                                        //     onPressed: () {
+                                        //       // Handle forgot password
+                                        //     },
+                                        //     style: TextButton.styleFrom(
+                                        //       foregroundColor: const Color(0xFF144BA6),
+                                        //     ),
+                                        //     child: const Text('Forgot Password?'),
+                                        //   ),
+                                        // ),
+
+                                        const SizedBox(height: 24),
+
                                         // Login button
                                         SizedBox(
-                width: double.infinity,
+                                          width: double.infinity,
                                           child: ElevatedButton(
                                             onPressed: _isLoading ? null : _login,
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(0xFF144BA6),
+                                              backgroundColor:
+                                                  const Color(0xFF144BA6),
                                               foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 12),
                                               shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(30),
+                                                borderRadius:
+                                                    BorderRadius.circular(30),
                                               ),
                                             ),
                                             child: _isLoading
                                                 ? const SizedBox(
                                                     width: 20,
                                                     height: 20,
-                                                    child: CircularProgressIndicator(
+                                                    child:
+                                                        CircularProgressIndicator(
                                                       color: Colors.white,
                                                       strokeWidth: 2,
                                                     ),
                                                   )
                                                 : const Text(
                                                     'Login',
-                                                    style: TextStyle(fontSize: 16),
+                                                    style:
+                                                        TextStyle(fontSize: 16),
                                                   ),
                                           ),
                                         ),
-                                        
+
                                         const SizedBox(height: 16),
-                                        
+
                                         // Switch to register account
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             const Text(
                                               "Don't have an account? ",
-                                              style: TextStyle(color: Colors.grey),
+                                              style:
+                                                  TextStyle(color: Colors.grey),
                                             ),
                                             GestureDetector(
                                               onTap: () {
-                                                _tabController.animateTo(1); // Switch to register tab
+                                                _tabController.animateTo(
+                                                    1); // Switch to register tab
                                               },
                                               child: const Text(
                                                 "Register",
@@ -396,76 +401,85 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                               ),
                                             ),
                                           ],
-            ),
-          ],
-        ),
-      ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                              
+
                               // Register Form
                               SingleChildScrollView(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Form(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 24.0),
+                                  child: Form(
                                     key: _registerFormKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
                                         // Name field
-            TextFormField(
+                                        TextFormField(
                                           controller: _registerNameController,
-                                          decoration: _inputDecoration('Full Name', Icons.person),
-              validator: (value) {
+                                          decoration: _inputDecoration(
+                                              'Full Name', Icons.person),
+                                          validator: (value) {
                                             if (value == null || value.isEmpty) {
                                               return 'Please enter your name';
                                             }
-                return null;
-              },
-            ),
-                                        
-            const SizedBox(height: 16),
-                                        
+                                            return null;
+                                          },
+                                        ),
+
+                                        const SizedBox(height: 16),
+
                                         // Username field
-            TextFormField(
-                                          controller: _registerUsernameController,
-                                          decoration: _inputDecoration('Username', Icons.account_circle),
-              validator: (value) {
+                                        TextFormField(
+                                          controller:
+                                              _registerUsernameController,
+                                          decoration: _inputDecoration(
+                                              'Username', Icons.account_circle),
+                                          validator: (value) {
                                             if (value == null || value.isEmpty) {
                                               return 'Please enter a username';
                                             }
-                return null;
-              },
-            ),
-                                        
-            const SizedBox(height: 16),
-                                        
+                                            return null;
+                                          },
+                                        ),
+
+                                        const SizedBox(height: 16),
+
                                         // Email field
-            TextFormField(
+                                        TextFormField(
                                           controller: _registerEmailController,
-                                          keyboardType: TextInputType.emailAddress,
-                                          decoration: _inputDecoration('Email', Icons.email),
-              validator: (value) {
+                                          keyboardType:
+                                              TextInputType.emailAddress,
+                                          decoration: _inputDecoration(
+                                              'Email', Icons.email),
+                                          validator: (value) {
                                             if (value == null || value.isEmpty) {
                                               return 'Please enter your email';
                                             }
-                                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                            if (!RegExp(
+                                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                                .hasMatch(value)) {
                                               return 'Please enter a valid email address';
                                             }
-                return null;
-              },
-            ),
-                                        
-            const SizedBox(height: 16),
-                                        
+                                            return null;
+                                          },
+                                        ),
+
+                                        const SizedBox(height: 16),
+
                                         // Password field
-            TextFormField(
-                                          controller: _registerPasswordController,
+                                        TextFormField(
+                                          controller:
+                                              _registerPasswordController,
                                           obscureText: !_isPasswordVisible,
                                           decoration: _inputDecoration(
                                             'Password',
                                             Icons.lock,
-                suffixIcon: IconButton(
+                                            suffixIcon: IconButton(
                                               icon: Icon(
                                                 _isPasswordVisible
                                                     ? Icons.visibility
@@ -474,32 +488,34 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                               ),
                                               onPressed: () {
                                                 setState(() {
-                                                  _isPasswordVisible = !_isPasswordVisible;
+                                                  _isPasswordVisible =
+                                                      !_isPasswordVisible;
                                                 });
                                               },
-                ),
-              ),
-              validator: (value) {
+                                            ),
+                                          ),
+                                          validator: (value) {
                                             if (value == null || value.isEmpty) {
                                               return 'Please enter a password';
                                             }
                                             if (value.length < 6) {
                                               return 'Password must be at least 6 characters';
                                             }
-                return null;
-              },
-            ),
-                                        
-            const SizedBox(height: 16),
-                                        
+                                            return null;
+                                          },
+                                        ),
+
+                                        const SizedBox(height: 16),
+
                                         // Confirm Password field
-            TextFormField(
-                                          controller: _registerConfirmPasswordController,
+                                        TextFormField(
+                                          controller:
+                                              _registerConfirmPasswordController,
                                           obscureText: !_isConfirmPasswordVisible,
                                           decoration: _inputDecoration(
                                             'Confirm Password',
                                             Icons.lock,
-                suffixIcon: IconButton(
+                                            suffixIcon: IconButton(
                                               icon: Icon(
                                                 _isConfirmPasswordVisible
                                                     ? Icons.visibility
@@ -508,66 +524,79 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                               ),
                                               onPressed: () {
                                                 setState(() {
-                                                  _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                                                  _isConfirmPasswordVisible =
+                                                      !_isConfirmPasswordVisible;
                                                 });
                                               },
-                ),
-              ),
-              validator: (value) {
+                                            ),
+                                          ),
+                                          validator: (value) {
                                             if (value == null || value.isEmpty) {
                                               return 'Please confirm your password';
                                             }
-                                            if (value != _registerPasswordController.text) {
+                                            if (value !=
+                                                _registerPasswordController
+                                                    .text) {
                                               return 'Passwords do not match';
                                             }
-                return null;
-              },
-            ),
-                                        
-            const SizedBox(height: 24),
-                                        
+                                            return null;
+                                          },
+                                        ),
+
+                                        const SizedBox(height: 24),
+
                                         // Register button
                                         SizedBox(
-                width: double.infinity,
+                                          width: double.infinity,
                                           child: ElevatedButton(
-                                            onPressed: _isLoading ? null : _register,
+                                            onPressed:
+                                                _isLoading ? null : _register,
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(0xFF144BA6),
+                                              backgroundColor:
+                                                  const Color(0xFF144BA6),
                                               foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 12),
                                               shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(30),
+                                                borderRadius:
+                                                    BorderRadius.circular(30),
                                               ),
                                             ),
                                             child: _isLoading
                                                 ? const SizedBox(
                                                     width: 20,
                                                     height: 20,
-                                                    child: CircularProgressIndicator(
+                                                    child:
+                                                        CircularProgressIndicator(
                                                       color: Colors.white,
                                                       strokeWidth: 2,
                                                     ),
                                                   )
                                                 : const Text(
                                                     'Register',
-                                                    style: TextStyle(fontSize: 16),
+                                                    style:
+                                                        TextStyle(fontSize: 16),
                                                   ),
                                           ),
                                         ),
-                                        
+
                                         const SizedBox(height: 16),
-                                        
+
                                         // Switch to login account
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             const Text(
                                               "Already have an account? ",
-                                              style: TextStyle(color: Colors.grey),
+                                              style:
+                                                  TextStyle(color: Colors.grey),
                                             ),
                                             GestureDetector(
                                               onTap: () {
-                                                _tabController.animateTo(0); // Switch to login tab
+                                                _tabController.animateTo(
+                                                    0); // Switch to login tab
                                               },
                                               child: const Text(
                                                 "Login",
@@ -587,12 +616,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                             ],
                           ),
                         ),
-                        
+
                         const SizedBox(height: 20),
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 30),
                 ],
               ),
@@ -602,9 +631,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       ),
     );
   }
-  
+
   // Helper method to create consistent input decoration
-  InputDecoration _inputDecoration(String label, IconData icon, {Widget? suffixIcon}) {
+  InputDecoration _inputDecoration(String label, IconData icon,
+      {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: Colors.grey),

@@ -383,12 +383,12 @@ const SidebarNav = ({ onClose, currentMode }) => {
               },
             }}
           >
-            <MenuItem
+            {/* <MenuItem
               icon={<LogoutIcon />}
               onClick={handleLogout}
             >
               {!collapsed && <Typography variant="body2">Logout</Typography>}
-            </MenuItem>
+            </MenuItem> */}
           </Menu>
         </Box>
       </Sidebar>
