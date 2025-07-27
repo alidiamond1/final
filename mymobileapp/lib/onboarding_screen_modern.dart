@@ -14,21 +14,21 @@ class _OnboardingScreenModernState extends State<OnboardingScreenModern> {
 
   final List<OnboardingPageData> _pages = [
     OnboardingPageData(
-      image: 'assets/images/onboarding1.png',
+      image: 'https://machinelearningmodels.org/wp-content/uploads/2023/09/142_resultado.webp',
       title: 'Access Somali Datasets',
       subtitle: 'Comprehensive language resources',
       color: const Color(0xFF3D73DD),
       textColor: Colors.white,
     ),
     OnboardingPageData(
-      image: 'assets/images/onboarding2.png',
+      image: 'https://vitalflux.com/wp-content/uploads/2021/02/dataset_publicly_available_free_machine_learning.png',
       title: 'Powerful Search Tools',
       subtitle: 'Find exactly what you need quickly',
       color: const Color(0xFF56AB91),
       textColor: Colors.white,
     ),
     OnboardingPageData(
-      image: 'assets/images/onboarding3.png',
+      image: 'https://www.zfort.com/images/blog/og/6384158f7c930_Machine%20Learning%20Dataset.png',
       title: 'Download & Share',
       subtitle: 'Use resources in your projects',
       color: const Color(0xFFF7B84B),
@@ -78,11 +78,27 @@ class _OnboardingScreenModernState extends State<OnboardingScreenModern> {
             },
             itemCount: _pages.length,
             itemBuilder: (context, index) {
-              return Image.asset(
+              return Image.network(
                 _pages[index].image,
-                fit: BoxFit.cover,
+                fit: BoxFit.fill,
                 width: double.infinity,
                 height: double.infinity,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Icon(Icons.error, color: Colors.red, size: 50),
+                  );
+                },
               );
             },
           ),

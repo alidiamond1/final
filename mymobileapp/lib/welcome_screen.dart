@@ -121,7 +121,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                           ),
                           child: ClipOval(
                             child: Image.network(
-                              'https://www.freepik.com/pikaso/explore/149149',
+                              'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Flag_of_Somalia.svg/2048px-Flag_of_Somalia.svg.png',
                               fit: BoxFit.cover,
                               loadingBuilder: (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
@@ -155,9 +155,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildNetworkImage('https://source.unsplash.com/random/100x100/?somalia+flag', 0.4),
-                          _buildNetworkImage('https://source.unsplash.com/random/100x100/?somalia+culture', 0.5),
-                          _buildNetworkImage('https://source.unsplash.com/random/100x100/?somalia+landscape', 0.6),
+                          _buildNetworkImage('https://tse2.mm.bing.net/th/id/OIP.vxBCc7T_peeofWwgIFtAwQHaEG?rs=1&pid=ImgDetMain&o=7&rm=3', 0.4),
+                          _buildNetworkImage('https://tse4.mm.bing.net/th/id/OIP.MGJekHmxQu-6hyr-X0FTDAAAAA?rs=1&pid=ImgDetMain&o=7&rm=3', 0.5),
+                          _buildNetworkImage('https://miro.medium.com/v2/resize:fit:800/1*_UYhAQX4Gb8s0VoxMX7NAQ.png', 0.6),
                         ],
                       ),
                     ),
