@@ -341,6 +341,32 @@ export const getDatasetStats = async (req, res) => {
     }
 };
 
+// Get datasets by user ID
+export const getUserDatasets = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        console.log(`📋 Fetching datasets for user: ${userId}`);
+        
+        // If the requesting user is not an admin, verify they are requesting their own datasets
+        if (req.user.role !== 'admin' && req.user._id.toString() !== userId) {
+            console.error(`❌ User ${req.user._id} attempted to access datasets of user ${userId}`);
+            return res.status(403).json({ error: "You can only view your own datasets" });
+        }
+        
+        // Exclude fileContent from the response to save bandwidth
+        // Populate user information
+        const datasets = await Dataset.find({ user: userId })
+            .select('-fileContent')
+            .populate('user', 'name email profileImage');
+        
+        console.log(`✅ Found ${datasets.length} datasets for user ${userId}`);
+        res.status(200).json({ datasets });
+    } catch (error) {
+        console.error(`❌ Error fetching user datasets: ${error.message}`);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // Delete dataset
 export const deleteDataset = async (req, res) => {
     try {

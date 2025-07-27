@@ -241,7 +241,6 @@ const Datasets = () => {
                 <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Size</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Uploaded By</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }} align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -302,22 +301,6 @@ const Datasets = () => {
                         {dataset.fileId && (
                           <Typography variant="caption" color="success.main" display="block">
                             ✓ File uploaded
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {dataset.user ? (
-                          <Box>
-                            <Typography variant="body2" fontWeight="500">
-                              {dataset.user.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                            {dataset.user && dataset.user.name ? dataset.user.name : "Admin"}
-                            </Typography>
-                          </Box>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            Not available
                           </Typography>
                         )}
                       </TableCell>

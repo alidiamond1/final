@@ -20,6 +20,16 @@ export const getAllDatasets = async () => {
   }
 };
 
+// Get datasets by user ID
+export const getDatasetsByUser = async (userId) => {
+  try {
+    const response = await api.get(`/datasets/user/${userId}`);
+    return response.data.datasets;
+  } catch (error) {
+    throw error.response?.data || error.message || 'Failed to fetch user datasets';
+  }
+};
+
 export const getDatasetById = async (datasetId) => {
   try {
     const response = await api.get(`/datasets/${datasetId}`);

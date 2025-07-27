@@ -1,5 +1,5 @@
 import express from "express";
-import { createDataset, getDataset, getAllDatasets, downloadDataset, upload, updateDataset, deleteDataset, getDatasetStats } from "../controllers/datasetController.js";
+import { createDataset, getDataset, getAllDatasets, downloadDataset, upload, updateDataset, deleteDataset, getDatasetStats, getUserDatasets } from "../controllers/datasetController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -12,6 +12,9 @@ router.get("/stats", protect, admin, getDatasetStats);
 
 // Get all datasets - requires authentication
 router.get("/", protect, getAllDatasets);
+
+// Get datasets by user - requires authentication
+router.get("/user/:userId", protect, getUserDatasets);
 
 // Get a single dataset - requires authentication
 router.get("/:id", protect, getDataset);

@@ -12,6 +12,7 @@ import Datasets from './pages/admin/Datasets';
 import UploadDataset from './pages/admin/UploadDataset';
 import Settings from './pages/admin/Settings';
 import EditProfile from './pages/admin/EditProfile';
+import UploadsByUser from './pages/admin/UploadsByUser';
 import AdminLayout from './components/admin/Layout';
 
 const AppRoutes = () => {
@@ -143,6 +144,16 @@ const AppRoutes = () => {
             <AdminRoute>
               <AdminLayout toggleColorMode={toggleColorMode} currentMode={mode}>
                 <UploadDataset />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/uploads-by-user"
+          element={
+            <AdminRoute>
+              <AdminLayout toggleColorMode={toggleColorMode} currentMode={mode}>
+                <UploadsByUser />
               </AdminLayout>
             </AdminRoute>
           }

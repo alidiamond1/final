@@ -26,6 +26,7 @@ import {
   Notifications as NotificationsIcon,
   Folder as FolderIcon,
   Close as CloseIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import defaultProfileImage from '../../assets/profile.jpg';
@@ -96,6 +97,12 @@ const SidebarNav = ({ onClose, currentMode }) => {
           path: '/admin/upload',
           icon: <UploadIcon />,
           key: 'upload'
+        },
+        {
+          name: 'Uploads By User',
+          path: '/admin/uploads-by-user',
+          icon: <PersonIcon />,
+          key: 'uploads-by-user'
         },
       ]
     },
@@ -383,12 +390,12 @@ const SidebarNav = ({ onClose, currentMode }) => {
               },
             }}
           >
-            {/* <MenuItem
+            <MenuItem
               icon={<LogoutIcon />}
               onClick={handleLogout}
             >
               {!collapsed && <Typography variant="body2">Logout</Typography>}
-            </MenuItem> */}
+            </MenuItem>
           </Menu>
         </Box>
       </Sidebar>
