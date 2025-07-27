@@ -1,50 +1,72 @@
-# Somali Language Learning Platform
+# Somali Dataset Repository Platform
 
-This project is a comprehensive language learning platform focused on the Somali language. It consists of three main components: a dataset management system, a mobile application, and a backend server.
+A comprehensive multi-platform system for managing, uploading, and downloading Somali language datasets, featuring separate platforms for administrators, users, and backend services.
 
-## Project Structure
+## Project Architecture
 
 ```
-├── somali-dataset/    # Dataset Management System
-├── mymobileapp/       # Flutter Mobile Application
-└── backend/          # Node.js Backend Server
+├── somali-dataset/    # Admin Web Platform
+├── mymobileapp/       # User Mobile Application
+└── backend/          # Central Backend Server
 ```
 
-## Components
+## Platform Components
 
-### 1. Somali Dataset Management System (`/somali-dataset`)
-A web-based system for managing Somali language datasets.
+### 1. Admin Web Platform (`/somali-dataset`)
+A web-based administration system for dataset management and user administration.
 
 **Tech Stack:**
 - React.js with Vite
-- Tailwind CSS
-- Node.js
+- Material UI components
+- Tailwind CSS for styling
 
 **Key Features:**
-- Dataset visualization and management
-- Data entry and validation tools
-- Interactive UI for dataset manipulation
+- Dataset Management:
+  - Upload new datasets with metadata
+  - Browse and search existing datasets
+  - Edit dataset information
+  - Delete outdated datasets
+  - Track dataset statistics and downloads
+- User Administration:
+  - Manage user accounts and permissions
+  - Monitor user activity
+  - Control access to sensitive datasets
+- Dashboard Analytics:
+  - Dataset usage statistics
+  - User engagement metrics
+  - System performance monitoring
 
-**Setup:**
+**Setup for Admin Platform:**
 ```bash
 cd somali-dataset
 npm install
 npm run dev
 ```
 
-### 2. Mobile Application (`/mymobileapp`)
-A cross-platform mobile application built with Flutter.
+### 2. User Mobile Application (`/mymobileapp`)
+A Flutter-based mobile application for accessing and downloading datasets.
 
 **Tech Stack:**
 - Flutter/Dart
-- Multiple platform support (iOS, Android, Web)
+- Provider for state management
+- Flutter Downloader for file management
 
-**Key Features:**
-- Cross-platform compatibility
-- Interactive learning interface
-- Asset management for language resources
+**User Features:**
+- Dataset Access:
+  - Browse available datasets
+  - Search and filter datasets
+  - View dataset details and metadata
+  - Download datasets for offline use
+- User Account Management:
+  - Create and manage user profile
+  - Track download history
+  - Save favorite datasets
+- Mobile-Optimized Experience:
+  - Responsive UI for various device sizes
+  - Background downloads
+  - Offline functionality for downloaded datasets
 
-**Setup:**
+**Setup for Mobile App:**
 ```bash
 cd mymobileapp
 flutter pub get
@@ -52,25 +74,43 @@ flutter run
 ```
 
 ### 3. Backend Server (`/backend`)
-A Node.js server handling API requests and data management.
+RESTful API server handling dataset operations and user authentication.
 
 **Tech Stack:**
-- Node.js
-- Express.js
-- MongoDB (assumed based on structure)
+- Node.js with Express.js
+- MongoDB for database
+- JWT for authentication
+- Multer for file uploads
 
-**Key Directory Structure:**
+**API Features:**
 ```
 backend/
-├── config/         # Configuration files
 ├── controllers/    # Request handlers
-├── middleware/     # Custom middleware
-├── model/         # Data models
-├── routes/        # API routes
-└── uploads/       # File upload directory
+│   ├── datasetController.js  # Dataset operations
+│   └── userController.js     # User management
+├── middleware/     # Request processors
+│   └── authMiddleware.js     # Authentication
+├── model/         # Data schemas
+├── routes/        # API endpoints
+│   ├── datasetRoutes.js      # Dataset endpoints
+│   └── userRoute.js          # User endpoints
+└── uploads/       # File storage for datasets
 ```
 
-**Setup:**
+**Key Endpoints:**
+- Dataset Management:
+  - `POST /api/datasets` - Upload new dataset
+  - `GET /api/datasets` - List all datasets
+  - `GET /api/datasets/:id` - Get dataset details
+  - `GET /api/datasets/:id/download` - Download dataset
+  - `PUT /api/datasets/:id` - Update dataset
+  - `DELETE /api/datasets/:id` - Delete dataset
+- User Operations:
+  - Authentication endpoints
+  - User profile management
+  - Permission controls
+
+**Setup for Backend:**
 ```bash
 cd backend
 npm install
@@ -84,18 +124,44 @@ npm start
 git clone https://github.com/alidiamond1/final.git
 ```
 
-2. Set up each component following their respective setup instructions above.
+2. Set up each platform:
+   - Start with the backend server
+   - Configure the admin web platform
+   - Deploy the mobile application
 
-3. Configure environment variables:
-   - Create `.env` files in both backend and dataset directories
-   - Set up necessary database connections and API keys
+3. Environment Configuration:
+   - Backend: Create `.env` with database connection, JWT secret, and storage paths
+   - Admin: Configure API endpoints in the environment settings
+   - Mobile: Set up API connection in the app configuration
 
 ## Development Requirements
 
-- Node.js (v14 or higher)
-- Flutter SDK
-- MongoDB
-- IDE with Flutter and Dart support (VS Code recommended)
+- Admin Platform:
+  - Node.js (v14 or higher)
+  - npm or yarn
+  - Modern web browser
+  
+- Mobile App:
+  - Flutter SDK
+  - Android Studio / Xcode
+  - Physical or virtual mobile device
+  
+- Backend:
+  - Node.js runtime
+  - MongoDB
+  - Storage space for dataset files
+
+## Data Security
+
+- Access Control:
+  - Role-based permissions (admin/user)
+  - JWT authentication for API access
+  - Secure download links
+
+- File Management:
+  - Secure file storage
+  - Validation of uploaded files
+  - Backup systems for dataset preservation
 
 ## Contributing
 
