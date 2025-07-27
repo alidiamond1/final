@@ -10,6 +10,16 @@ export const getStats = async () => {
   }
 };
 
+// Get download history
+export const getDownloadHistory = async () => {
+    try {
+        const response = await api.get('/datasets/downloads/history');
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message || 'Failed to fetch download history';
+    }
+};
+
 // Dataset Management APIs
 export const getAllDatasets = async () => {
   try {

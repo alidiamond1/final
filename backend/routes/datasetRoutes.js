@@ -1,5 +1,16 @@
 import express from "express";
-import { createDataset, getDataset, getAllDatasets, downloadDataset, upload, updateDataset, deleteDataset, getDatasetStats, getUserDatasets } from "../controllers/datasetController.js";
+import { 
+    createDataset, 
+    getDataset, 
+    getAllDatasets, 
+    downloadDataset, 
+    upload, 
+    updateDataset, 
+    deleteDataset, 
+    getDatasetStats, 
+    getUserDatasets,
+    getDownloadHistory 
+} from "../controllers/datasetController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -9,6 +20,9 @@ router.post("/", protect, upload.single('file'), createDataset);
 
 // Get dataset statistics - requires admin privileges
 router.get("/stats", protect, admin, getDatasetStats);
+
+// Get download history - requires admin privileges
+router.get("/downloads/history", protect, admin, getDownloadHistory);
 
 // Get all datasets - requires authentication
 router.get("/", protect, getAllDatasets);

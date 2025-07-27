@@ -26,7 +26,7 @@ import {
 import { ResponsiveBar } from "@nivo/bar";
 import { ResponsivePie } from "@nivo/pie";
 import { ResponsiveLine } from "@nivo/line";
-import { getAllDatasets, getStats } from "../../api/datasets";
+import { getAllDatasets, getStats, getDownloadHistory } from "../../api/datasets";
 import { getAllUsers } from "../../api/auth";
 import { themeColors } from "../../theme";
 import defaultProfileImage from "../../assets/profile.jpg";
@@ -203,10 +203,11 @@ const Dashboard = () => {
       try {
         setLoading(true);
         // Fetch all data in parallel, including the new stats endpoint
-        const [datasetsData, usersData, statsData] = await Promise.all([
+        const [datasetsData, usersData, statsData, downloadHistoryData] = await Promise.all([
           getAllDatasets(),
           getAllUsers(),
           getStats(),
+          getDownloadHistory()
         ]);
 
         setDatasets(datasetsData || []);
@@ -214,8 +215,7 @@ const Dashboard = () => {
 
         // Process data for charts
         const categoryDistribution = processCategories(datasetsData || []);
-        const downloadHistory = generateDownloadData(datasetsData || []);
-
+        
         // Set stats directly from the API response
         setStats({
           datasets: (datasetsData || []).length,
@@ -225,7 +225,7 @@ const Dashboard = () => {
         });
 
         setCategoryData(categoryDistribution);
-        setDownloadData(downloadHistory);
+        setDownloadData(downloadHistoryData || []);
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
         setError("Could not load dashboard data. Please try again later.");
@@ -627,7 +627,7 @@ const Dashboard = () => {
                 {downloadData.length > 0 ? (
                   <Line
                     data={{
-                      labels: downloadData.map((item) => item.month),
+                      labels: downloadData.map((item) => item._id),
                       datasets: [
                         {
                           label: "Downloads",

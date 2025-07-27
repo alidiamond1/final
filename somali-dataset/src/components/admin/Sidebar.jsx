@@ -90,7 +90,6 @@ const SidebarNav = ({ onClose, currentMode }) => {
           path: '/admin/datasets',
           icon: <DatasetIcon />,
           key: 'datasets',
-          badge: 4
         },
         {
           name: 'Upload Dataset',
@@ -99,10 +98,10 @@ const SidebarNav = ({ onClose, currentMode }) => {
           key: 'upload'
         },
         {
-          name: 'Uploads By User',
-          path: '/admin/uploads-by-user',
+          name: 'Uploads By Users',
+          path: '/admin/uploads-by-users',
           icon: <PersonIcon />,
-          key: 'uploads-by-user'
+          key: 'uploads-by-users'
         },
       ]
     },
@@ -114,7 +113,6 @@ const SidebarNav = ({ onClose, currentMode }) => {
           path: '/admin/users',
           icon: <UsersIcon />,
           key: 'users',
-          badge: 2
         },
         {
           name: 'Settings',

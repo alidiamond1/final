@@ -1,5 +1,6 @@
 import Dataset from "../model/datasetModel.js";
 import User from "../model/userModel.js";
+import Download from "../model/downloadModel.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -251,13 +252,10 @@ export const downloadDataset = async (req, res) => {
         }
         
         // Record download in the Download collection
-        /* try {
+        try {
             await Download.create({
                 dataset: dataset._id,
                 user: userId || undefined,
-                datasetName: dataset.title,
-                userName: user ? user.name : 'Anonymous',
-                userRole: user ? user.role : 'guest',
                 ipAddress: req.ip || req.connection.remoteAddress,
                 userAgent: req.headers['user-agent']
             });
@@ -265,7 +263,7 @@ export const downloadDataset = async (req, res) => {
         } catch (err) {
             console.error(`❌ Error recording download: ${err.message}`);
             // Continue even if recording fails
-        } */
+        }
         
         // If the dataset has file content, serve it
         if (dataset.fileContent && dataset.fileName) {
@@ -299,6 +297,27 @@ export const downloadDataset = async (req, res) => {
     }
 };
 
+// Get download history
+export const getDownloadHistory = async (req, res) => {
+    try {
+        const history = await Download.aggregate([
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$downloadedAt" } },
+                    downloads: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+        
+        res.status(200).json(history);
+    } catch (error) {
+        console.error('❌ Error fetching download history:', error);
+        res.status(500).json({ error: 'Server error while fetching download history' });
+    }
+};
 // Get dataset statistics (total downloads and storage)
 export const getDatasetStats = async (req, res) => {
     try {
