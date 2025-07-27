@@ -99,7 +99,7 @@ const SidebarNav = ({ onClose, currentMode }) => {
         },
         {
           name: 'Uploads By Users',
-          path: '/admin/uploads-by-users',
+          path: '/admin/uploads-by-user',
           icon: <PersonIcon />,
           key: 'uploads-by-users'
         },
