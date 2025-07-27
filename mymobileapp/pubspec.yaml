@@ -52,7 +52,7 @@ dependencies:
   flutter_downloader: ^1.11.5  # Native Android/iOS download manager
   permission_handler: ^11.3.0  # Runtime storage permission
   google_nav_bar: ^5.0.7
-  # file_saver: ^0.3.0  # Simple file saving across platforms
+  shimmer: ^3.0.0
 
 
 dev_dependencies:

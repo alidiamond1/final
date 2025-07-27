@@ -95,7 +95,7 @@ class AuthService {
   }
 
   // Update user profile
-  static Future<Map<String, dynamic>> updateProfile(String name, String email) async {
+  static Future<Map<String, dynamic>> updateProfile(String name, String email, String username) async {
     final token = await getToken();
     final user = await getUser();
     if (token == null || user == null) {
@@ -111,6 +111,7 @@ class AuthService {
       body: jsonEncode({
         'name': name,
         'email': email,
+        'username': username,
       }),
     );
 

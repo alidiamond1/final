@@ -93,6 +93,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final success = await authProvider.updateProfile(
         _nameController.text,
         _emailController.text,
+        _usernameController.text,
       );
 
       if (!mounted) return;
@@ -180,11 +181,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 20),
                 TextFormField(
                   controller: _usernameController,
-                  readOnly: true,
-                  decoration: _inputDecoration('Username', Icons.alternate_email).copyWith(
-                    fillColor: Colors.grey.shade200,
-                    hintStyle: TextStyle(color: Colors.grey.shade500),
-                  ),
+                  decoration: _inputDecoration('Username', Icons.alternate_email),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a username';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
                 TextFormField(

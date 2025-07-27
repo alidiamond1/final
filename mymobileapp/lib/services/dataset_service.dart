@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Dataset {
   final String id;
@@ -311,6 +312,43 @@ class DatasetService {
     } catch (e) {
       debugPrint('Error uploading dataset: $e');
       throw Exception('Upload error: ${e.toString()}');
+    }
+  }
+
+  static Future<void> recordDownload(String datasetId, String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/$datasetId/download'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'userId': userId}),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to record download');
+    }
+  }
+
+  static Future<int> getUserDownloadCount(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    final response = await http.get(
+      Uri.parse('http://192.168.1.102:5000/api/users/$userId/download-count'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['count'];
+    } else {
+      throw Exception('Failed to get user download count');
     }
   }
 }

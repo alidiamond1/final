@@ -145,6 +145,7 @@ export const updateUser = async (req, res) => {
         const userResponse = {
             _id: user._id,
             name: user.name,
+            username: user.username,
             email: user.email,
             role: user.role,
             profileImage: user.profileImage,

@@ -26,4 +26,5 @@ router.put("/:id", protect, updateUser);
 router.put("/:id/password", protect, updatePassword);
 router.post("/:id/profile-image", protect, uploadProfileImage, saveProfileImage);
 
+
 export default router;

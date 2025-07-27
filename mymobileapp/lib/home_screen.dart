@@ -11,6 +11,7 @@ import 'upload_dataset_screen.dart';
 import 'services/auth_service.dart';
 import 'download_manager.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:shimmer/shimmer.dart';
 
 // Main Screen Widget that holds the Bottom Navigation Bar
 class HomeScreen extends StatefulWidget {
@@ -69,6 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.black.withOpacity(.1),
           )
         ],
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
       ),
       child: SafeArea(
         child: Padding(
@@ -81,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
             iconSize: 24,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             duration: const Duration(milliseconds: 400),
-            tabBackgroundColor: const Color(0xFF2C5282), // Same deep blue color
+            tabBackgroundColor: const Color(0xFF3182CE),
             color: Colors.grey.shade600,
             tabs: const [
               GButton(
@@ -149,17 +154,16 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
       backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: isLoading && datasets.isEmpty
-            ? const Center(child: CircularProgressIndicator())
+            ? _buildLoadingShimmer()
             : CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   _buildHeader(context),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate(
+                        [
                           const SizedBox(height: 20),
                           _AnimatedFadeSlide(controller: _animationController, child: _buildSearchBar()),
                           const SizedBox(height: 24),
@@ -167,57 +171,41 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
                           const SizedBox(height: 16),
                           _AnimatedFadeSlide(controller: _animationController, delay: 0.2, child: _buildCategoriesSection()),
                           const SizedBox(height: 24),
-                          if (datasets.isNotEmpty)
+                          if (datasets.isNotEmpty) ...[
                             _AnimatedFadeSlide(controller: _animationController, delay: 0.3, child: _buildSectionTitle('Featured Dataset')),
-                          if (datasets.isNotEmpty)
                             const SizedBox(height: 16),
-                          if (datasets.isNotEmpty)
-                            _AnimatedFadeSlide(controller: _animationController, delay: 0.4, child: _buildFeaturedDatasetCard(context, datasets.first))
-                          else if (!isLoading)
+                            _AnimatedFadeSlide(controller: _animationController, delay: 0.4, child: _buildFeaturedDatasetCard(context, datasets.first)),
+                          ] else if (!isLoading)
                             _buildEmptyDatasetCard(),
-                          if (datasets.isNotEmpty)
-                            const SizedBox(height: 24),
-                          if (datasets.length > 1)
+                          const SizedBox(height: 24),
+                          if (datasets.length > 1) ...[
                             _AnimatedFadeSlide(
                               controller: _animationController,
                               delay: 0.5,
                               child: _buildSectionTitle(
                                 'Recent Datasets',
-                                showViewAll: datasets.length > 5, // 1 featured + 4 recent
+                                showViewAll: datasets.length > 5,
                                 onViewAllTap: () {
+                                  // Navigate to the Dataset list, assuming it's the second tab (index 1)
+                                  // This requires a way to change the parent's state. A better approach
+                                  // might be using a Provider or another state management solution to handle navigation.
+                                  // For now, we'll navigate directly.
                                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => const DatasetListScreen()));
                                 },
                               ),
-                              
                             ),
-                          if (datasets.length > 1)
                             const SizedBox(height: 16),
-                          if (datasets.length > 1)
-                            _AnimatedFadeSlide(
-                              controller: _animationController,
-                              delay: 0.6,
-                              child: GridView.builder(
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  childAspectRatio: 0.85,
-                                  crossAxisSpacing: 12,
-                                  mainAxisSpacing: 12,
-                                ),
-                                itemCount: datasets.skip(1).take(4).length,
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemBuilder: (context, index) {
-                                  return _buildDatasetGridItem(context, datasets.skip(1).toList()[index]);
-                                },
-                              ),
-                            )
-                          else if (datasets.isEmpty && isLoading)
-                            const Center(child: CircularProgressIndicator()),
-                          const SizedBox(height: 24),
+                          ],
                         ],
                       ),
                     ),
                   ),
+                  if (datasets.length > 1)
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: _buildRecentDatasetsGrid(datasets),
+                    ),
+                  SliverToBoxAdapter(child: const SizedBox(height: 24)),
                 ],
               ),
       ),
@@ -233,7 +221,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
     final imageString = user?['profileImage'] as String?;
 
     return SliverAppBar(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.grey[50],
       elevation: 0,
       pinned: true,
       automaticallyImplyLeading: false,
@@ -251,7 +239,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
         Padding(
           padding: const EdgeInsets.only(right: 16.0),
           child: CircleAvatar(
-            key: authProvider.profileImageKey, // Force rebuild when image changes
+            key: authProvider.profileImageKey,
             radius: 22,
             backgroundColor: Colors.grey.shade200,
             backgroundImage: _getImageProvider(imageString),
@@ -270,14 +258,12 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
 
   ImageProvider _getImageProvider(String? imageString) {
     if (imageString == null || imageString.isEmpty) {
-      return const AssetImage('assets/profile.jpg'); // Default image
+      return const AssetImage('assets/profile.jpg');
     }
 
     if (imageString.startsWith('http')) {
-      // Handle regular URL
       return NetworkImage(imageString);
     } else if (imageString.startsWith('data:image')) {
-      // Handle Base64 data URI
       try {
         final parts = imageString.split(',');
         if (parts.length == 2) {
@@ -286,11 +272,10 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
         }
       } catch (e) {
         print('Error decoding Base64 image on home screen: $e');
-        return const AssetImage('assets/profile.jpg'); // Fallback on error
+        return const AssetImage('assets/profile.jpg');
       }
     }
 
-    // Fallback for any other case, including old file paths
     return const AssetImage('assets/profile.jpg');
   }
 
@@ -303,26 +288,30 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(color: Colors.grey.shade200),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 14),
       ),
     );
   }
 
-    Widget _buildSectionTitle(String title, {bool showViewAll = false, VoidCallback? onViewAllTap}) {
+  Widget _buildSectionTitle(String title, {bool showViewAll = false, VoidCallback? onViewAllTap}) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween, // Tani waxay kala fogaynaysaa labada qoraal
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         if (showViewAll)
           InkWell(
-            onTap: onViewAllTap, // Halkan ayuu ka dhacayaa tagitaanka shaashadda kale
+            onTap: onViewAllTap,
             child: const Text(
               'View All',
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF2C5282),
+                color: Color(0xFF3182CE),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -362,15 +351,22 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
       width: 100,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 30, color: color),
           const SizedBox(height: 8),
-          Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 14)),
+          Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade700, fontSize: 14)),
         ],
       ),
     );
@@ -381,10 +377,9 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
       height: 220,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [Colors.blueGrey.shade800, Colors.blueGrey.shade600],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        image: const DecorationImage(
+          image: NetworkImage('https://images.unsplash.com/photo-1593642532454-e138e28a63f4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1740&q=80'),
+          fit: BoxFit.cover,
         ),
         boxShadow: [
           BoxShadow(
@@ -398,7 +393,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
-            colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+            colors: [Colors.black.withOpacity(0.7), Colors.transparent],
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
           ),
@@ -408,7 +403,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
           child: InkWell(
             borderRadius: BorderRadius.circular(20),
             onTap: () {
-               _showDatasetDetails(context, dataset);
+              _showDatasetDetails(context, dataset);
             },
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -435,15 +430,35 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
       ),
     );
   }
+  
+  Widget _buildRecentDatasetsGrid(List<Dataset> datasets) {
+    return SliverGrid(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.85,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          return _buildDatasetGridItem(context, datasets.skip(1).toList()[index]);
+        },
+        childCount: datasets.skip(1).take(4).length,
+      ),
+    );
+  }
 
   Widget _buildDatasetGridItem(BuildContext context, Dataset dataset) {
     final typeColor = _getTypeColor(dataset.fileType);
     final typeIcon = _getTypeIcon(dataset.fileType);
 
     return Card(
-      elevation: 2,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200, width: 1),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
@@ -516,6 +531,72 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+  
+  Widget _buildLoadingShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            backgroundColor: Colors.grey[50],
+            elevation: 0,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildShimmerPlaceholder(height: 28, width: 180),
+                const SizedBox(height: 8),
+                _buildShimmerPlaceholder(height: 16, width: 220),
+              ],
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: _buildShimmerPlaceholder(isCircle: true, height: 44, width: 44),
+              )
+            ],
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(16.0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildShimmerPlaceholder(height: 48),
+                const SizedBox(height: 24),
+                _buildShimmerPlaceholder(height: 20, width: 120),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 110,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 4,
+                    itemBuilder: (context, index) => Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: _buildShimmerPlaceholder(width: 100),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildShimmerPlaceholder(height: 20, width: 150),
+                const SizedBox(height: 16),
+                _buildShimmerPlaceholder(height: 220),
+              ]),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerPlaceholder({double? height, double? width, bool isCircle = false}) {
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(isCircle ? 50 : 12),
       ),
     );
   }
@@ -640,7 +721,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF2C5282), size: 24),
+            Icon(icon, color: const Color(0xFF3182CE), size: 24),
             const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

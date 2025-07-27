@@ -100,13 +100,13 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> updateProfile(String name, String email) async {
+  Future<bool> updateProfile(String name, String email, String username) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final updatedUser = await AuthService.updateProfile(name, email);
+      final updatedUser = await AuthService.updateProfile(name, email, username);
       _user = updatedUser;
       _isLoading = false;
       notifyListeners();

@@ -9,7 +9,7 @@ import {
     deleteDataset, 
     getDatasetStats, 
     getUserDatasets,
-    getDownloadHistory 
+    getDownloadHistory, // Import the new controller function
 } from "../controllers/datasetController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
@@ -35,6 +35,7 @@ router.get("/:id", protect, getDataset);
 
 // Download dataset - no authentication required to allow direct downloads from mobile
 router.get("/:id/download", downloadDataset);
+
 
 // Update dataset - requires authentication and admin privileges
 router.put("/:id", protect, admin, upload.single('file'), updateDataset);
