@@ -69,6 +69,7 @@ const Users = () => {
   });
   const [addFormData, setAddFormData] = useState({
     name: '',
+    username: '',
     email: '',
     password: '',
     role: 'user',
@@ -239,6 +240,7 @@ const Users = () => {
       // Create new user through API
       const response = await axios.post('http://localhost:3000/api/users/register', {
         name: addFormData.name,
+        username: addFormData.username,
         email: addFormData.email,
         password: addFormData.password,
         role: addFormData.role,
@@ -252,6 +254,7 @@ const Users = () => {
       // Reset form and close dialog
       setAddFormData({
         name: '',
+        username: '',
         email: '',
         password: '',
         role: 'user',
@@ -281,6 +284,7 @@ const Users = () => {
   const handleAddClick = () => {
     setAddFormData({
       name: '',
+      username: '',
       email: '',
       password: '',
       role: 'user',
@@ -560,6 +564,16 @@ const Users = () => {
               value={addFormData.name}
               onChange={handleAddFormChange}
               autoFocus
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="add-username"
+              label="Username"
+              name="username"
+              value={addFormData.username}
+              onChange={handleAddFormChange}
             />
             <TextField
               margin="normal"
