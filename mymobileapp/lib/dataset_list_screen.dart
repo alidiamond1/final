@@ -94,15 +94,15 @@ class _DatasetListScreenState extends State<DatasetListScreen> {
         foregroundColor: Colors.black,
         elevation: 1,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const UploadDatasetScreen()),
-          );
-        },
-        backgroundColor: primaryBlue,
-        child: const Icon(Icons.add),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     Navigator.of(context).push(
+      //       MaterialPageRoute(builder: (context) => const UploadDatasetScreen()),
+      //     );
+      //   },
+      //   backgroundColor: primaryBlue,
+      //   child: const Icon(Icons.add),
+      // ),
       body: RefreshIndicator(
         onRefresh: _refreshDatasets,
         child: Consumer<DatasetProvider>(
