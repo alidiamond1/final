@@ -22,7 +22,6 @@ import {
   Settings as SettingsIcon,
   AccountCircle as ProfileIcon,
   MenuOpen as MenuOpenIcon,
-  Language as LanguageIcon,
   Notifications as NotificationsIcon,
   Folder as FolderIcon,
   Close as CloseIcon,
@@ -208,10 +207,13 @@ const SidebarNav = ({ onClose, currentMode }) => {
         >
           {!collapsed && (
             <Box display="flex" alignItems="center" gap={1}>
-              <LanguageIcon
-                sx={{
-                  color: colors.menuItemColorActive,
-                  fontSize: 28,
+              <img
+                src="/logo.png"
+                alt="Somali Dataset Logo"
+                style={{
+                  width: 32,
+                  height: 32,
+                  objectFit: 'contain',
                 }}
               />
               <Typography
@@ -223,6 +225,19 @@ const SidebarNav = ({ onClose, currentMode }) => {
                 Somali Dataset
               </Typography>
             </Box>
+          )}
+          
+          {/* Show logo when collapsed */}
+          {collapsed && (
+            <img
+              src="/logo.png"
+              alt="Logo"
+              style={{
+                width: 28,
+                height: 28,
+                objectFit: 'contain',
+              }}
+            />
           )}
           
           {/* For mobile, show close button instead of collapse */}
