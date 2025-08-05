@@ -54,6 +54,7 @@ const Datasets = () => {
     description: '',
     type: '',
     size: '',
+    file: null,
   });
   
   useEffect(() => {
@@ -148,8 +149,12 @@ const Datasets = () => {
   };
   
   const handleEditFormChange = (e) => {
-    const { name, value } = e.target;
-    setEditFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, files } = e.target;
+    if (name === 'file') {
+      setEditFormData(prev => ({ ...prev, file: files[0] }));
+    } else {
+      setEditFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
   
   const handleEditSubmit = async () => {
@@ -425,6 +430,22 @@ const Datasets = () => {
               value={editFormData.size}
               onChange={handleEditFormChange}
             />
+            <Box mt={2}>
+              <Button variant="contained" component="label">
+                Upload New File
+                <input
+                  type="file"
+                  hidden
+                  name="file"
+                  onChange={handleEditFormChange}
+                />
+              </Button>
+              {editFormData.file && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Selected file: {editFormData.file.name}
+                </Typography>
+              )}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -438,4 +459,4 @@ const Datasets = () => {
   );
 };
 
-export default Datasets; 
+export default Datasets;

@@ -64,6 +64,7 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editFormData, setEditFormData] = useState({
     name: '',
+    username: '',
     email: '',
     role: 'user',
   });
@@ -115,6 +116,7 @@ const Users = () => {
     const filtered = users.filter(
       user => 
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.role.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -144,6 +146,7 @@ const Users = () => {
     setSelectedUser(user);
     setEditFormData({
       name: user.name,
+      username: user.username,
       email: user.email,
       role: user.role,
     });
@@ -379,6 +382,7 @@ const Users = () => {
             <TableHead sx={{ backgroundColor: themeColors.background.dark }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold' }}>User</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Username</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }} align="right">Actions</TableCell>
@@ -417,6 +421,7 @@ const Users = () => {
                           <Typography variant="body1">{user.name}</Typography>
                         </Box>
                       </TableCell>
+                      <TableCell>{user.username}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
                         <Chip
@@ -505,6 +510,16 @@ const Users = () => {
               label="Name"
               name="name"
               value={editFormData.name}
+              onChange={handleEditFormChange}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="edit-username"
+              label="Username"
+              name="username"
+              value={editFormData.username}
               onChange={handleEditFormChange}
             />
             <TextField

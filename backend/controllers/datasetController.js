@@ -189,6 +189,8 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+
+
 export const getDataset = async (req, res) => {
     try {
         const { id } = req.params;
@@ -414,72 +416,49 @@ export const deleteDataset = async (req, res) => {
 export const updateDataset = async (req, res) => {
     try {
         const { id } = req.params;
-        console.log(`📝 Received update request for dataset: ${id}`);
-        console.log('Update data:', req.body);
-        console.log('File:', req.file);
-        
-        // Find the dataset to update
+        const { title, description, type } = req.body;
+
         const dataset = await Dataset.findById(id);
+
         if (!dataset) {
-            console.error(`❌ Dataset not found: ${id}`);
-            return res.status(404).json({ error: "Dataset not found" });
+            return res.status(404).json({ message: 'Dataset not found' });
         }
-        
-        // Prepare update data
-        const updateData = {
-            title: req.body.title || dataset.title,
-            description: req.body.description || dataset.description,
-            type: req.body.type || dataset.type,
-            size: req.body.size || dataset.size,
-            updatedAt: Date.now()
-        };
-        
-        // If a new file is uploaded, process it
+
+        // Authorization: Check if the user is an admin or the owner of the dataset
+        if (req.user.role !== 'admin' && dataset.user.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: 'User not authorized to update this dataset' });
+        }
+
+        // Update fields
+        dataset.title = title || dataset.title;
+        dataset.description = description || dataset.description;
+        dataset.type = type || dataset.type;
+
+        // If a new file is uploaded, replace the old one
         if (req.file) {
-            console.log(`📄 New file uploaded: ${req.file.originalname}`);
-            
-            // Read the file content
-            const fileData = fs.readFileSync(req.file.path);
-            
-            // Update with new file data
-            updateData.fileName = req.file.originalname;
-            updateData.fileContent = fileData;
-            updateData.mimeType = req.file.mimetype;
-            
-            // Remove the temporary file
-            fs.unlinkSync(req.file.path);
-            console.log(`🗑️ Temporary file removed: ${req.file.path}`);
+            dataset.fileContent = fs.readFileSync(req.file.path);
+            dataset.fileName = req.file.originalname;
+            dataset.fileContentType = req.file.mimetype;
+            dataset.size = req.file.size;
+            fs.unlinkSync(req.file.path); // Clean up temp file
         }
-        
-        // Update the dataset
-        const updatedDataset = await Dataset.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true, runValidators: true }
-        );
-        
-        console.log(`✅ Dataset updated successfully: ${id}`);
-        
-        // Return the updated dataset (without file content for performance)
-        const datasetResponse = {
+
+        const updatedDataset = await dataset.save();
+
+        res.json({
             _id: updatedDataset._id,
             title: updatedDataset.title,
             description: updatedDataset.description,
             type: updatedDataset.type,
             fileName: updatedDataset.fileName,
             size: updatedDataset.size,
+            user: updatedDataset.user,
             createdAt: updatedDataset.createdAt,
             updatedAt: updatedDataset.updatedAt,
-            fileId: updatedDataset.fileContent ? updatedDataset._id : null
-        };
-        
-        res.status(200).json({ 
-            message: "Dataset updated successfully", 
-            dataset: datasetResponse 
         });
+
     } catch (error) {
-        console.error("❌ Error updating dataset:", error);
-        res.status(500).json({ error: error.message });
+        res.status(400).json({ message: error.message });
     }
 };
 

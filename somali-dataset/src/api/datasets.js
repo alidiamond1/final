@@ -98,32 +98,21 @@ export const createDataset = async (formData) => {
 
 export const updateDataset = async (datasetId, datasetData) => {
   try {
-    console.log(`Updating dataset with ID: ${datasetId}`, datasetData);
-    
     const formData = new FormData();
-    
-    // Append text fields
-    Object.keys(datasetData).forEach(key => {
-      if (key !== 'file') {
+
+    // Append all fields from datasetData to formData
+    for (const key in datasetData) {
+      if (datasetData[key] !== null && datasetData[key] !== undefined) {
         formData.append(key, datasetData[key]);
       }
-    });
-    
-    // Append file if it exists
-    if (datasetData.file) {
-      formData.append('file', datasetData.file);
     }
-    
-    // Log the request being sent
-    console.log(`Sending PUT request to: /datasets/${datasetId}`);
-    
+
     const response = await api.put(`/datasets/${datasetId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-    
-    console.log('Update response:', response.data);
+
     return response.data;
   } catch (error) {
     console.error('Error updating dataset:', error);
