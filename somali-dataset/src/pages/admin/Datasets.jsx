@@ -165,8 +165,17 @@ const Datasets = () => {
       const result = await updateDataset(selectedDataset._id, editFormData);
       const updatedDataset = result.dataset;
       
-      // Refetch datasets to ensure the list is up-to-date
-      fetchDatasets();
+      setDatasets(prevDatasets => 
+        prevDatasets.map(dataset => 
+          dataset._id === selectedDataset._id ? updatedDataset : dataset
+        )
+      );
+      
+      setFilteredDatasets(prevFilteredDatasets => 
+        prevFilteredDatasets.map(dataset => 
+          dataset._id === selectedDataset._id ? updatedDataset : dataset
+        )
+      );
       
       setOpenEditDialog(false);
       setSelectedDataset(null);
