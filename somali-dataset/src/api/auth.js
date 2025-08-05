@@ -30,10 +30,17 @@ api.interceptors.request.use(
 // Auth APIs
 export const loginAdmin = async (credentials) => {
   try {
-    console.log('Attempting admin login with:', credentials.email);
+    console.log('Attempting admin login with:', credentials.email || credentials.username);
     
-    const response = await api.post('/users/login', credentials);
+    // Convert email field to username if needed for backend compatibility
+    const loginData = {
+      username: credentials.email || credentials.username,
+      password: credentials.password
+    };
+    
+    const response = await api.post('/users/login', loginData);
     console.log('Login response:', response.data);
+    console.log('Full user object:', JSON.stringify(response.data.user, null, 2));
     
     // Check if response contains token and user data
     if (!response.data.token || !response.data.user) {
@@ -41,8 +48,16 @@ export const loginAdmin = async (credentials) => {
     }
     
     // Verify if user is an admin
+    console.log('User role from server:', response.data.user.role);
+    console.log('Role type:', typeof response.data.user.role);
+    console.log('Role comparison result:', response.data.user.role !== 'admin');
+    
     if (response.data.user.role !== 'admin') {
-      console.error('Non-admin user attempted to log in:', response.data.user);
+      console.error('Non-admin user attempted to log in:', {
+        username: response.data.user.username,
+        role: response.data.user.role,
+        expected: 'admin'
+      });
       throw new Error('Unauthorized: Admin access only');
     }
     
@@ -136,6 +151,8 @@ export const updateCurrentUser = async (userData) => {
 
 export const updateUserPassword = async (passwordData) => {
   try {
+    console.log('updateUserPassword called with:', { ...passwordData, currentPassword: '[HIDDEN]', newPassword: '[HIDDEN]' });
+    
     // Get the current user from localStorage
     const currentUser = JSON.parse(localStorage.getItem('admin_user') || '{}');
     
@@ -143,16 +160,24 @@ export const updateUserPassword = async (passwordData) => {
       throw new Error('User not found');
     }
     
+    console.log('Updating password for user ID:', currentUser._id);
+    
     // Call the API to update the password
     const response = await api.put(`/users/${currentUser._id}/password`, passwordData);
+    console.log('Password update response:', response.data);
     return response.data;
   } catch (error) {
+    console.error('Password update error:', error);
+    if (error.response) {
+      console.error('Server response:', error.response.data);
+    }
     throw error.response?.data?.error || error.message || 'Failed to update password';
   }
 };
 
 export const uploadProfileImage = async (imageFile) => {
   try {
+    console.log('uploadProfileImage called with:', imageFile);
     const currentUser = JSON.parse(localStorage.getItem('admin_user') || '{}');
     if (!currentUser || !currentUser._id) {
       throw new Error('User not found');
@@ -160,14 +185,26 @@ export const uploadProfileImage = async (imageFile) => {
 
     const formData = new FormData();
     formData.append('profileImage', imageFile);
+    
+    // Log FormData contents for debugging
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
 
-    // When using FormData with axios, you should NOT set the 'Content-Type' header manually.
-    // Axios will automatically set it to 'multipart/form-data' with the correct boundary.
-    // The auth interceptor will handle the 'Authorization' header.
-    const response = await api.post(
-      `/users/${currentUser._id}/profile-image`,
-      formData
+    // Create a custom axios instance for file upload to avoid Content-Type conflicts
+    const response = await axios.post(
+      `${API_URL}/users/${currentUser._id}/profile-image`,
+      formData,
+      {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+          // Don't set Content-Type, let axios handle it for FormData
+        },
+      }
     );
+
+    console.log('Upload response:', response.data);
 
     // Update localStorage with the updated user data including the new image path
     const updatedUser = { ...currentUser, profileImage: response.data.user.profileImage };

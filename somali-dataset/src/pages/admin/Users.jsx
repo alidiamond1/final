@@ -194,11 +194,26 @@ const Users = () => {
     setAddFormData(prev => ({ ...prev, [name]: value }));
   };
   
+const checkDuplicateUsername = async (username) => {
+    try {
+      const response = await getAllUsers();
+      return response.some(user => user.username === username && user._id !== selectedUser._id);
+    } catch (error) {
+      console.error('Error checking duplicate username:', error);
+      return false;
+    }
+  };
+
   const handleEditSubmit = async () => {
     if (!selectedUser) return;
     
     try {
       setLoading(true);
+      // Check for duplicate username
+      const isDuplicate = await checkDuplicateUsername(editFormData.username);
+      if (isDuplicate) {
+        throw new Error('Username already exists');
+      }
       const updatedUser = await updateUser(selectedUser._id, editFormData);
       
       setUsers(prevUsers => 

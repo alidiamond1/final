@@ -21,6 +21,7 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   PhotoCamera as PhotoCameraIcon,
+  AlternateEmail as AlternateEmailIcon,
 } from '@mui/icons-material';
 import { themeColors } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
@@ -36,6 +37,7 @@ const EditProfile = () => {
   
   const [profileData, setProfileData] = useState({
     name: '',
+    username: '',
     email: '',
     bio: '',
     currentPassword: '',
@@ -58,6 +60,7 @@ const EditProfile = () => {
       setProfileData(prev => ({
         ...prev,
         name: user.name || '',
+        username: user.username || '',
         email: user.email || '',
         bio: user.bio || '',
       }));
@@ -96,15 +99,20 @@ const EditProfile = () => {
   };
   
   const handleImageUpload = async () => {
-    if (!selectedImage) return;
+    if (!selectedImage) {
+      console.log('No image selected');
+      return;
+    }
 
     try {
+      console.log('Starting image upload process...', selectedImage);
       setImageUploading(true);
       setError(null);
 
       // The `updateProfileImage` function from context should handle the API call
       // and update the global user state.
-      await updateProfileImage(selectedImage);
+      const result = await updateProfileImage(selectedImage);
+      console.log('Image upload completed:', result);
 
       // After the context updates the user, the useEffect hook will automatically
       // update the preview image. We don't need to set it manually here.
@@ -119,6 +127,7 @@ const EditProfile = () => {
 
     } catch (err) {
       console.error('Failed to upload image:', err);
+      console.error('Error details:', err);
       setError(err.message || 'Failed to upload profile image. Please try again.');
     } finally {
       setImageUploading(false);
@@ -164,19 +173,25 @@ const EditProfile = () => {
     setLoading(true);
     
     try {
+      console.log('Starting profile update...', profileData);
+      
       // Update profile information
       await updateUserProfile({
         name: profileData.name,
+        username: profileData.username,
         email: profileData.email,
         bio: profileData.bio,
       });
+      console.log('Profile information updated successfully');
       
       // If password fields are filled, update password
       if (profileData.newPassword && profileData.currentPassword) {
+        console.log('Updating password...');
         await changePassword({
           currentPassword: profileData.currentPassword,
           newPassword: profileData.newPassword,
         });
+        console.log('Password updated successfully');
       }
       
       setSuccess(true);
@@ -321,6 +336,23 @@ const EditProfile = () => {
                       startAdornment: (
                         <InputAdornment position="start">
                           <PersonIcon sx={{ color: themeColors.grey[500] }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Username"
+                    name="username"
+                    value={profileData.username}
+                    onChange={handleChange}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AlternateEmailIcon sx={{ color: themeColors.grey[500] }} />
                         </InputAdornment>
                       ),
                     }}

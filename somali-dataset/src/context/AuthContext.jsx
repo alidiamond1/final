@@ -82,6 +82,7 @@ export const AuthProvider = ({ children }) => {
       // Call the updateCurrentUser function from the auth API
       const { user: updatedUser } = await updateCurrentUser({
         name: profileData.name,
+        username: profileData.username,
         email: profileData.email,
         bio: profileData.bio,
       });
@@ -131,20 +132,24 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfileImage = async (imageFile) => {
     try {
+      console.log('Starting profile image update...', imageFile);
       setAuth(prev => ({ ...prev, loading: true, error: null }));
       
       // Call the uploadProfileImage function from the auth API
       const result = await uploadProfileImage(imageFile);
+      console.log('Profile image upload result:', result);
       
       // Update the user in the state with the new profile image
+      // The result structure from backend is { message, user }
       setAuth(prev => ({
         ...prev,
-        user: { ...prev.user, profileImage: result.profileImage },
+        user: { ...prev.user, profileImage: result.user.profileImage },
         loading: false
       }));
       
       return result;
     } catch (error) {
+      console.error('Profile image upload error:', error);
       setAuth(prev => ({
         ...prev,
         loading: false,

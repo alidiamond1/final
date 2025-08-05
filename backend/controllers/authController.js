@@ -68,12 +68,24 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
     try {
         const { username, password } = req.body;
+        console.log('Login attempt for username:', username);
 
         // Find user by username
         const user = await User.findOne({ username });
-
-        // If no user found or password doesn't match, send a generic error
-        if (!user || !(await bcrypt.compare(password, user.password))) {
+        
+        if (!user) {
+            console.log('User not found:', username);
+            return res.status(401).json({ error: "Invalid username or password" });
+        }
+        
+        console.log('User found:', user._id, 'checking password...');
+        
+        // Check password
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        console.log('Password match result:', passwordMatch);
+        
+        if (!passwordMatch) {
+            console.log('Password does not match for user:', username);
             return res.status(401).json({ error: "Invalid username or password" });
         }
 
@@ -164,28 +176,36 @@ export const updatePassword = async (req, res) => {
         const { currentPassword, newPassword } = req.body;
         
         // Find the user
+console.log('Attempting to update password for user:', id);
         const user = await User.findById(id);
         if (!user) {
+            console.log('User not found for password update:', id);
             return res.status(404).json({ error: "User not found" });
         }
+        
+        console.log('User found:', user._id);
         
         // Verify current password
         const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
         if (!isPasswordValid) {
+            console.log('Current password is incorrect for user:', id);
             return res.status(401).json({ error: "Current password is incorrect" });
         }
+        console.log('Current password verified for user:', id);
         
-        // Hash new password
+// Hash new password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
+        console.log('New password hashed for user:', id);
         
         // Update password
         user.password = hashedPassword;
         await user.save();
+        console.log('Password updated and saved for user:', id);
         
         res.status(200).json({ message: "Password updated successfully" });
     } catch (error) {
-        console.error('Error updating password:', error);
+        console.error('Error updating password for user:', id, error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -208,11 +228,24 @@ const upload = multer({
 
 // Middleware to handle profile image upload
 export const uploadProfileImage = (req, res, next) => {
+    console.log('uploadProfileImage middleware called');
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('Request body keys:', Object.keys(req.body));
+    
     const uploadSingle = upload.single('profileImage');
 
     uploadSingle(req, res, (err) => {
         if (err) {
+            console.error('Multer error:', err);
             return res.status(400).json({ error: err.message });
+        }
+        console.log('File received:', req.file ? 'Yes' : 'No');
+        if (req.file) {
+            console.log('File details:', {
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                size: req.file.size
+            });
         }
         next();
     });
