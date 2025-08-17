@@ -57,12 +57,20 @@ function connectWithRetry() {
 connectWithRetry();
 const app = express();
 
-// A more robust CORS configuration
+// Enhanced CORS configuration for Vercel deployment
 const corsOptions = {
-    origin: '*', // You can restrict this to specific origins in production
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // Allow all origins for now (can be restricted later)
+        return callback(null, true);
+    },
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     credentials: true,
-    exposedHeaders: ['Content-Length', 'Content-Disposition'], // Expose necessary headers
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['Content-Length', 'Content-Disposition'],
+    maxAge: 86400 // Cache preflight response for 24 hours
 };
 
 app.use(cors(corsOptions));
