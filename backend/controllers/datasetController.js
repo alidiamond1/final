@@ -8,6 +8,7 @@ import multer from "multer";
 import mongoose from "mongoose";
 import crypto from "crypto";
 import dotenv from "dotenv";
+import os from 'os';
 
 dotenv.config();
 
@@ -15,23 +16,19 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Set up a temporary disk storage for multer
-const tempDir = path.join(__dirname, '../temp-uploads');
-// Create the directory if it doesn't exist
-if (!fs.existsSync(tempDir)) {
-  fs.mkdirSync(tempDir, { recursive: true });
+// Ensure the /tmp/uploads directory exists in the serverless environment
+const uploadsDir = path.join(os.tmpdir(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configure multer for temporary file storage
+// Multer configuration for file uploads
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, tempDir);
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir); // Save files to the temporary directory
   },
-  filename: function (req, file, cb) {
-    // Create unique filename with original extension
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
   }
 });
 
@@ -436,11 +433,14 @@ export const updateDataset = async (req, res) => {
 
         // If a new file is uploaded, replace the old one
         if (req.file) {
-            dataset.fileContent = fs.readFileSync(req.file.path);
+            // The path where the file will be permanently stored
+            const finalPath = path.join(uploadsDir, req.file.filename);
+            fs.renameSync(req.file.path, finalPath);
+
+            dataset.filePath = `uploads/${req.file.filename}`; // Relative path for serving
             dataset.fileName = req.file.originalname;
             dataset.fileContentType = req.file.mimetype;
             dataset.size = req.file.size;
-            fs.unlinkSync(req.file.path); // Clean up temp file
         }
 
         const updatedDataset = await dataset.save();
