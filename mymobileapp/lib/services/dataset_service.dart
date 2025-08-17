@@ -338,7 +338,7 @@ class DatasetService {
     final token = prefs.getString('token');
 
     final response = await http.get(
-      Uri.parse('http://192.168.1.102:5000/api/users/$userId/download-count'),
+      Uri.parse('https://YOUR_PROJECT_NAME.vercel.app/api/users/$userId/download-count'),
       headers: {
         'Authorization': 'Bearer $token',
       },
