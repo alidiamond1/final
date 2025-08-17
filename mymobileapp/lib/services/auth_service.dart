@@ -7,8 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   // Replace with your actual API URL. For Android emulator, use 10.0.2.2
-  //  static const String baseUrl = 'http://10.202.244.22:3000/api/users';
-  static const String serverBaseUrl = 'http://10.102.229.22:3000';
+  // For production, using your Vercel deployment
+  static const String serverBaseUrl = 'https://final-7rzo.vercel.app';
   static const String baseUrl = '$serverBaseUrl/api/users';
 
   // Store auth token

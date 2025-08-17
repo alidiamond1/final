@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Make sure this URL matches your backend server
 // For local development typically http://localhost:3000/api
-// For Android emulator use http://10.0.2.2:3000/api
-const API_URL = 'http://localhost:3000/api';
+// For production on Vercel - temporarily using production URL for testing
+const API_URL = 'https://final-7rzo.vercel.app/api';
 
 console.log('API client initialized with URL:', API_URL);
 
